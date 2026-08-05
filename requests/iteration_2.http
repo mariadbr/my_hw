@@ -8,15 +8,34 @@ authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
   "balance": 100
 }
 
-### Negative test: User cannot deposit amount of 5001 into his or her account
-//5000 и 5001 можно
+### Positive test: User can deposit amount of 0.01 into his or her account
 POST http://localhost:4111/api/v1/accounts/deposit
 Content-Type: application/json
 authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
 
 {
   "id": 3,
-  "balance": 5001
+  "balance": 0.01
+}
+
+### Positive test: User can deposit amount of 4999.99 into his or her account
+POST http://localhost:4111/api/v1/accounts/deposit
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "id": 3,
+  "balance": 4999.99
+}
+
+### Negative test: User cannot deposit amount of 5000.01 into his or her account
+POST http://localhost:4111/api/v1/accounts/deposit
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "id": 3,
+  "balance": 5000.01
 }
 
 ### Negative test: User cannot deposit negative amount into his or her account
@@ -61,6 +80,28 @@ authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
   "amount": 50
 }
 
+### Positive test: User can transfer amount of 0.01 his or her account
+POST http://localhost:4111/api/v1/accounts/transfer
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "senderAccountId": 3,
+  "receiverAccountId": 4,
+  "amount": 0.01
+}
+
+### Positive test: User can transfer amount of 9999.99 his or her account
+POST http://localhost:4111/api/v1/accounts/transfer
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "senderAccountId": 3,
+  "receiverAccountId": 4,
+  "amount": 9999.99
+}
+
 ### Positive test: User can transfer money someone else account
 POST http://localhost:4111/api/v1/accounts/transfer
 Content-Type: application/json
@@ -72,8 +113,7 @@ authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
   "amount": 10
 }
 
-### Negative test: User cannot transfer amount of 10001 his or her account
-//успешно
+### Negative test: User cannot transfer amount of 10000.01 his or her account
 POST http://localhost:4111/api/v1/accounts/transfer
 Content-Type: application/json
 authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
@@ -81,7 +121,7 @@ authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
 {
   "senderAccountId": 3,
   "receiverAccountId": 4,
-  "amount": 10001
+  "amount": 10000.01
 }
 
 ### Negative test: User cannot transfer negative amount into his or her account
@@ -113,4 +153,49 @@ authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
 
 {
   "name": "Kate Kate"
+}
+
+### Negative test: User cannot update name in profile to a name that consists of one word
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": "Kate"
+}
+
+### Negative test: User cannot update name in profile to a name that consists of two words that are not divided with a space
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": "KateKate"
+}
+
+### Negative test: User cannot update name in profile to a name with untrimmed space
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": "KateKate "
+}
+
+### Negative test: User cannot update name in profile to a name that consists of numbers
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": "12 13"
+}
+
+### Negative test: User cannot update name in profile to a name that contains special characters
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": "K@te Ka$e"
 }
