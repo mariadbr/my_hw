@@ -1,0 +1,210 @@
+### Positive test: User can deposit money into his or her account
+POST http://localhost:4111/api/v1/accounts/deposit
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "id": 3,
+  "balance": 100
+}
+
+### Positive test: User can deposit amount of 0.01 into his or her account
+POST http://localhost:4111/api/v1/accounts/deposit
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "id": 3,
+  "balance": 0.01
+}
+
+### Positive test: User can deposit amount of 4999.99 into his or her account
+POST http://localhost:4111/api/v1/accounts/deposit
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "id": 3,
+  "balance": 4999.99
+}
+
+### Negative test: User cannot deposit amount of 5000.01 into his or her account
+POST http://localhost:4111/api/v1/accounts/deposit
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "id": 3,
+  "balance": 5000.01
+}
+
+### Negative test: User cannot deposit negative amount into his or her account
+POST http://localhost:4111/api/v1/accounts/deposit
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "id": 3,
+  "balance": -1
+}
+
+### Negative test: User cannot deposit money into someone else account
+//kate19981: аккаунты 1-4; kate1998: аккаунты: 5
+POST http://localhost:4111/api/v1/accounts/deposit
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "id": 5,
+  "balance": 100
+}
+
+### Negative test: User cannot deposit money into non-existent account
+POST http://localhost:4111/api/v1/accounts/deposit
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "id": 10,
+  "balance": 100
+}
+
+### Positive test: User can transfer money into his or her account
+POST http://localhost:4111/api/v1/accounts/transfer
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "senderAccountId": 3,
+  "receiverAccountId": 4,
+  "amount": 50
+}
+
+### Positive test: User can transfer amount of 0.01 his or her account
+POST http://localhost:4111/api/v1/accounts/transfer
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "senderAccountId": 3,
+  "receiverAccountId": 4,
+  "amount": 0.01
+}
+
+### Positive test: User can transfer amount of 9999.99 his or her account
+POST http://localhost:4111/api/v1/accounts/transfer
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "senderAccountId": 3,
+  "receiverAccountId": 4,
+  "amount": 9999.99
+}
+
+### Positive test: User can transfer money someone else account
+POST http://localhost:4111/api/v1/accounts/transfer
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "senderAccountId": 3,
+  "receiverAccountId": 5,
+  "amount": 10
+}
+
+### Negative test: User cannot transfer amount of 10000.01 his or her account
+POST http://localhost:4111/api/v1/accounts/transfer
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "senderAccountId": 3,
+  "receiverAccountId": 4,
+  "amount": 10000.01
+}
+
+### Negative test: User cannot transfer negative amount into his or her account
+POST http://localhost:4111/api/v1/accounts/transfer
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "senderAccountId": 3,
+  "receiverAccountId": 4,
+  "amount": -1
+}
+
+### Negative test: User cannot transfer amount bigger than available in his or her account
+POST http://localhost:4111/api/v1/accounts/transfer
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "senderAccountId": 3,
+  "receiverAccountId": 4,
+  "amount": 10001
+}
+
+### Positive test: User can update name in profile
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": "Kate Kate"
+}
+
+### Negative test: User cannot update name in profile to a name that consists of one word
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": "Kate"
+}
+
+### Negative test: User cannot update name in profile to a name that consists of two words that are not divided with a space
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": "KateKate"
+}
+
+### Negative test: User cannot update name in profile to a name with untrimmed space
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": "KateKate "
+}
+
+### Negative test: User cannot update name in profile to a name that consists of numbers
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": "12 13"
+}
+
+### Negative test: User cannot update name in profile to a name that contains special characters
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": "K@te Ka$e"
+}
+
+### Negative test: User cannot update name in profile to a name that is empty
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": ""
+}
