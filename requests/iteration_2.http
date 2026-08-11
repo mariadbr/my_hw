@@ -199,3 +199,12 @@ authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
 {
   "name": "K@te Ka$e"
 }
+
+### Negative test: User cannot update name in profile to a name that is empty
+PUT http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+authorization: Basic a2F0ZTE5OTgxOnZlcnlzVFJvbmdQYXNzd29yZDMzJA==
+
+{
+  "name": ""
+}
