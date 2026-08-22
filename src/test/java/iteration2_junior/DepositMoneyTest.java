@@ -1,3 +1,5 @@
+package iteration2_junior;
+
 import io.restassured.http.ContentType;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
@@ -87,6 +89,18 @@ public class DepositMoneyTest extends SetupRestAssured {
                 .assertThat()
                 .statusCode(HttpStatus.SC_OK)
                 .body("balance", Matchers.equalTo(amount));
+
+        //проверка
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", userAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                //почему здесь не f
+                .body("[0].balance", Matchers.equalTo(amount));
     }
 
     @Test
@@ -153,6 +167,17 @@ public class DepositMoneyTest extends SetupRestAssured {
                     .then()
                     .assertThat()
                     .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+        //проверка
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", userAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("[0].balance", Matchers.equalTo(0.0f));
     }
 
     @Test
@@ -219,6 +244,17 @@ public class DepositMoneyTest extends SetupRestAssured {
                 .then()
                 .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+        //проверка
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", userAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("[0].balance", Matchers.equalTo(0.0f));
     }
 
     @Test
@@ -331,6 +367,17 @@ public class DepositMoneyTest extends SetupRestAssured {
                 .assertThat()
                 .statusCode(HttpStatus.SC_FORBIDDEN)
                 .body(Matchers.equalTo("Unauthorized access to account"));
+
+        //проверка
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", secondUserAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("[0].balance", Matchers.equalTo(0.0f));
     }
 
     @Test

@@ -1,3 +1,5 @@
+package iteration2_junior;
+
 import io.restassured.http.ContentType;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
@@ -8,6 +10,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 import static io.restassured.RestAssured.given;
 
 public class TransferMoneyTest extends SetupRestAssured {
+    private final float MAX_DEPOSIT_AMOUNT = 5000.0f;
+
     @Test
     public void userCanTransferValidAmountIntoSomeonesAccount() {
         //создать 1 юзера
@@ -17,7 +21,7 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .header("authorization", "Basic YWRtaW46YWRtaW4=")
                 .body("""
                         {
-                        "username": "sam207",
+                        "username": "sam001",
                         "password": "Hel0!!@@:124",
                         "role": "USER"
                         }
@@ -34,7 +38,7 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .header("authorization", "Basic YWRtaW46YWRtaW4=")
                 .body("""
                         {
-                        "username": "sam207",
+                        "username": "sam001",
                         "password": "Hel0!!@@:124"
                         }
                         """)
@@ -64,7 +68,7 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .header("authorization", "Basic YWRtaW46YWRtaW4=")
                 .body("""
                         {
-                        "username": "roy208",
+                        "username": "roy399",
                         "password": "Hel0!!@@:124",
                         "role": "USER"
                         }
@@ -81,7 +85,7 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .header("authorization", "Basic YWRtaW46YWRtaW4=")
                 .body("""
                         {
-                        "username": "roy208",
+                        "username": "roy399",
                         "password": "Hel0!!@@:124"
                         }
                         """)
@@ -112,9 +116,9 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .body("""
                         {
                           "id": %s,
-                          "balance": 100
+                          "balance": %s
                         }
-                        """.formatted(firstUserAccountId))
+                        """.formatted(firstUserAccountId, MAX_DEPOSIT_AMOUNT))
                 .post("http://localhost:4111/api/v1/accounts/deposit")
                 .then()
                 .log().all()
@@ -138,7 +142,29 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .assertThat()
                 .statusCode(HttpStatus.SC_OK);
 
-        //проверка
+        //проверка счета 1 пользователя
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", firstUserAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("[0].balance", Matchers.equalTo(4949.95f));
+
+        //проверка счета 2 пользователя
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", secondUserAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("[0].balance", Matchers.equalTo(50.05f));
+
+        //проверка транзакции
         given()
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
@@ -223,9 +249,25 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .body("""
                         {
                           "id": %s,
-                          "balance": 10000
+                          "balance": %s
                         }
-                        """.formatted(userFirstAccountId))
+                        """.formatted(userFirstAccountId, MAX_DEPOSIT_AMOUNT))
+                .post("http://localhost:4111/api/v1/accounts/deposit")
+                .then()
+                .log().all()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK);
+
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", userAuthToken)
+                .body("""
+                        {
+                          "id": %s,
+                          "balance": %s
+                        }
+                        """.formatted(userFirstAccountId, MAX_DEPOSIT_AMOUNT))
                 .post("http://localhost:4111/api/v1/accounts/deposit")
                 .then()
                 .log().all()
@@ -249,7 +291,19 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .assertThat()
                 .statusCode(HttpStatus.SC_OK);
 
-        //проверка
+        //проверка счета
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", userAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("find { it.id == %s }.balance".formatted(userSecondAccountId),
+                        Matchers.equalTo(amount));
+
+        //проверка транзакции
         given()
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
@@ -331,9 +385,9 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .body("""
                         {
                           "id": %s,
-                          "balance": 100
+                          "balance": %s
                         }
-                        """.formatted(userFirstAccountId))
+                        """.formatted(userFirstAccountId, MAX_DEPOSIT_AMOUNT))
                 .post("http://localhost:4111/api/v1/accounts/deposit")
                 .then()
                 .log().all()
@@ -356,6 +410,18 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .then()
                 .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+        //проверка счета
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", userAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("find { it.id == %s }.balance".formatted(userSecondAccountId),
+                        Matchers.equalTo(0.0f));
     }
 
     @Test
@@ -455,20 +521,22 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .path("id");
 
         //депозит денег
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("authorization", firstUserAuthToken)
-                .body("""
+        for (int i = 0; i < 3; i++) {
+            given()
+                    .contentType(ContentType.JSON)
+                    .accept(ContentType.JSON)
+                    .header("authorization", firstUserAuthToken)
+                    .body("""
                         {
                           "id": %s,
-                          "balance": 10001
+                          "balance": %s
                         }
-                        """.formatted(firstUserAccountId))
-                .post("http://localhost:4111/api/v1/accounts/deposit")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK);
+                        """.formatted(firstUserAccountId, MAX_DEPOSIT_AMOUNT))
+                    .post("http://localhost:4111/api/v1/accounts/deposit")
+                    .then()
+                    .assertThat()
+                    .statusCode(HttpStatus.SC_OK);
+        }
 
         //трансфер денег
         given()
@@ -487,6 +555,27 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
 
+        //проверка счета 1 пользователя
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", firstUserAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("[0].balance", Matchers.equalTo(MAX_DEPOSIT_AMOUNT * 3));
+
+        //проверка счета 2 пользователя
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", secondUserAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("[0].balance", Matchers.equalTo(0.0f));
     }
 
     @Test
@@ -618,5 +707,26 @@ public class TransferMoneyTest extends SetupRestAssured {
                 .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
 
+        //проверка счета 1 пользователя
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", firstUserAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("[0].balance", Matchers.equalTo(100f));
+
+        //проверка счета 2 пользователя
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", secondUserAuthToken)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("[0].balance", Matchers.equalTo(0.0f));
     }
 }

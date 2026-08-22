@@ -1,3 +1,5 @@
+package iteration2_junior;
+
 import io.restassured.http.ContentType;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
@@ -64,6 +66,16 @@ public class UpdateNameTest extends SetupRestAssured {
                 .statusCode(HttpStatus.SC_OK)
                 .body("customer.name", Matchers.equalTo("Stas St"))
                 .body("message", Matchers.equalTo("Profile updated successfully"));
+
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", userAuthToken)
+                .get("http://localhost:4111/api/v1/customer/profile")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("name", Matchers.equalTo("Stas St"));
     }
 
     public static Stream<Arguments> userData() {
@@ -129,5 +141,15 @@ public class UpdateNameTest extends SetupRestAssured {
                 .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST)
                 .body(Matchers.equalTo("Name must contain two words with letters only"));
+
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .header("authorization", userAuthToken)
+                .get("http://localhost:4111/api/v1/customer/profile")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .body("name", Matchers.equalTo(null));
     }
 }
