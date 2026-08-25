@@ -234,15 +234,15 @@ public class DepositMoneyTest extends BaseTest {
         softly.assertThat(firstUserAccountResponseList.getFirst().getTransactions()).isEmpty();
 
         //проверка аккаунта 2 юзера
-        List<AccountResponse> accountResponseList = new GetCustomerAccountsRequester(
+        List<AccountResponse> secondUserAccountResponseList = new GetCustomerAccountsRequester(
                 RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
                 .get()
                 .extract()
                 .as(new TypeRef<List<AccountResponse>>() {});
 
-        softly.assertThat(accountResponseList.getFirst().getBalance()).isEqualTo(0.0f);
-        softly.assertThat(accountResponseList.getFirst().getTransactions()).isEmpty();
+        softly.assertThat(secondUserAccountResponseList.getFirst().getBalance()).isEqualTo(0.0f);
+        softly.assertThat(secondUserAccountResponseList.getFirst().getTransactions()).isEmpty();
     }
 
     @Test

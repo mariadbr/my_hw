@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 public class AccountResponse extends BaseModel{ //нужно ли BaseModel; стоит ли переименовать в Account, тк это не целый response, а только часть
     //или GetCustomerAccountsResponse ?
-    private long id;
+    private long id; //счета
     private String accountNumber;
     private float balance;
     private List<TransactionResponse> transactions;

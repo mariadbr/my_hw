@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class TransactionResponse { //или переименовать Transaction? ситуация как с AccountResponse?
-    private long id;
+    private long id; //транзакции
     private float amount;
     private TransactionType type; //enum?
     private String timestamp;

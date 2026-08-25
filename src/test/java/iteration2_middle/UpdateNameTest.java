@@ -1,15 +1,14 @@
 package iteration2_middle;
 
 import generators.RandomData;
-import models.CreateUserRequest;
-import models.UpdateNameRequest;
-import models.UserRole;
+import models.*;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import requests.AdminCreateUserRequester;
+import requests.GetCustomerProfileRequester;
 import requests.UpdateNameRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
@@ -26,9 +25,11 @@ public class UpdateNameTest extends BaseTest {
                 .build();
 
         //создание пользователя
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(),
+        CreateUserResponse createUserResponse = new AdminCreateUserRequester(RequestSpecs.adminSpec(),
                 ResponseSpecs.entityWasCreated())
-                .post(createUserRequest);
+                .post(createUserRequest)
+                .extract()
+                .as(CreateUserResponse.class);
 
         String updatedName = "Stas St";
 
@@ -36,11 +37,26 @@ public class UpdateNameTest extends BaseTest {
                 .name(updatedName)
                 .build();
 
+        //изменение имени
         new UpdateNameRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
                 .sendPut(updateNameRequest)
                 .body("customer.name", Matchers.equalTo(updatedName))
                 .body("message", Matchers.equalTo("Profile updated successfully"));
+
+        //проверка имени
+        GetCustomerProfileResponse getCustomerProfileResponse = new GetCustomerProfileRequester(
+                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(GetCustomerProfileResponse.class);
+
+        softly.assertThat(getCustomerProfileResponse.getId()).isEqualTo(createUserResponse.getId());
+        softly.assertThat(getCustomerProfileResponse.getUsername()).isEqualTo(createUserRequest.getUsername());
+        softly.assertThat(getCustomerProfileResponse.getPassword()).isNotEqualTo(createUserRequest.getPassword());
+        softly.assertThat(getCustomerProfileResponse.getName()).isEqualTo(updatedName);
+        softly.assertThat(getCustomerProfileResponse.getRole().toString()).isEqualTo(UserRole.USER.toString());
     }
 
 
@@ -65,9 +81,11 @@ public class UpdateNameTest extends BaseTest {
                 .build();
 
         //создание пользователя
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(),
+        CreateUserResponse createUserResponse = new AdminCreateUserRequester(RequestSpecs.adminSpec(),
                 ResponseSpecs.entityWasCreated())
-                .post(createUserRequest);
+                .post(createUserRequest)
+                .extract()
+                .as(CreateUserResponse.class);
 
         UpdateNameRequest updateNameRequest = UpdateNameRequest.builder()
                 .name(name)
@@ -76,5 +94,19 @@ public class UpdateNameTest extends BaseTest {
         new UpdateNameRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsBadRequestWithText("Name must contain two words with letters only"))
                 .sendPut(updateNameRequest);
+
+        //проверка имени
+        GetCustomerProfileResponse getCustomerProfileResponse = new GetCustomerProfileRequester(
+                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(GetCustomerProfileResponse.class);
+
+        softly.assertThat(getCustomerProfileResponse.getId()).isEqualTo(createUserResponse.getId());
+        softly.assertThat(getCustomerProfileResponse.getUsername()).isEqualTo(createUserRequest.getUsername());
+        softly.assertThat(getCustomerProfileResponse.getPassword()).isNotEqualTo(createUserRequest.getPassword());
+        softly.assertThat(getCustomerProfileResponse.getName()).isEqualTo(null);
+        softly.assertThat(getCustomerProfileResponse.getRole().toString()).isEqualTo(UserRole.USER.toString());
     }
 }
