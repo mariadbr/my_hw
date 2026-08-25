@@ -1,4 +1,4 @@
-package iteration2;
+package iteration2_middle;
 
 import generators.RandomData;
 import models.CreateUserRequest;
@@ -15,8 +15,6 @@ import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
 import java.util.stream.Stream;
-
-import static io.restassured.RestAssured.given;
 
 public class UpdateNameTest extends BaseTest {
     @Test

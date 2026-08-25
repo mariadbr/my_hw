@@ -1,9 +1,8 @@
-package iteration2;
+package iteration2_middle;
 
 import generators.RandomData;
-import io.restassured.http.ContentType;
+import io.restassured.common.mapper.TypeRef;
 import models.*;
-import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -12,21 +11,20 @@ import org.junit.jupiter.params.provider.MethodSource;
 import requests.AdminCreateUserRequester;
 import requests.CreateAccountRequester;
 import requests.DepositMoneyRequester;
-import requests.LoginUserRequester;
+import requests.GetCustomerAccountsRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
+import java.util.List;
 import java.util.stream.Stream;
 
-import static io.restassured.RestAssured.given;
-import static io.restassured.RestAssured.responseSpecification;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DepositMoneyTest extends BaseTest {
 
     public static Stream<Arguments> validUserAndAmountDataForDeposit() {
         return Stream.of(
-                Arguments.of(RandomData.getUsername(), 0.01f),  //почему здесь нужно f?
+                Arguments.of(RandomData.getUsername(), 0.01f),
                 Arguments.of(RandomData.getUsername(), 4999.99f));
     }
 
@@ -65,6 +63,21 @@ public class DepositMoneyTest extends BaseTest {
                 .as(DepositMoneyResponse.class);
 
         assertThat(depositMoneyResponse.getBalance(), Matchers.equalTo(amount));
+
+        //проверка
+        List<AccountResponse> accountResponseList = new GetCustomerAccountsRequester(
+                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(new TypeRef<List<AccountResponse>>() {});
+
+        AccountResponse account = accountResponseList.stream()
+                .filter(accountResponse -> accountResponse.getId() == createAccountResponse.getId())
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(account.getBalance(), Matchers.equalTo(amount));
     }
 
     @Test
@@ -96,6 +109,22 @@ public class DepositMoneyTest extends BaseTest {
         new DepositMoneyRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsBadRequestWithText( "Deposit amount cannot exceed 5000"))
                 .post(depositMoneyRequest);
+
+        //проверка
+        List<AccountResponse> accountResponseList = new GetCustomerAccountsRequester(
+                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(new TypeRef<List<AccountResponse>>() {});
+
+        AccountResponse account = accountResponseList.stream()
+                .filter(accountResponse -> accountResponse.getId() == createAccountResponse.getId())
+                .findFirst()
+                .orElseThrow();
+
+        softly.assertThat(account.getBalance()).isEqualTo(0.0f);
+        softly.assertThat(account.getTransactions()).isEmpty();
     }
 
     @Test
@@ -127,6 +156,22 @@ public class DepositMoneyTest extends BaseTest {
         new DepositMoneyRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsBadRequestWithText( "Deposit amount must be at least 0.01"))
                 .post(depositMoneyRequest);
+
+        //проверка
+        List<AccountResponse> accountResponseList = new GetCustomerAccountsRequester(
+                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(new TypeRef<List<AccountResponse>>() {});
+
+        AccountResponse account = accountResponseList.stream()
+                .filter(accountResponse -> accountResponse.getId() == createAccountResponse.getId())
+                .findFirst()
+                .orElseThrow();
+
+        softly.assertThat(account.getBalance()).isEqualTo(0.0f);
+        softly.assertThat(account.getTransactions()).isEmpty();
     }
 
     @Test
@@ -176,6 +221,28 @@ public class DepositMoneyTest extends BaseTest {
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsForbidden("Unauthorized access to account"))
                 .post(depositMoneyRequest);
+
+        //проверка аккаунта 1 юзера
+        List<AccountResponse> firstUserAccountResponseList = new GetCustomerAccountsRequester(
+                RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(new TypeRef<List<AccountResponse>>() {});
+
+        softly.assertThat(firstUserAccountResponseList.getFirst().getBalance()).isEqualTo(0.0f);
+        softly.assertThat(firstUserAccountResponseList.getFirst().getTransactions()).isEmpty();
+
+        //проверка аккаунта 2 юзера
+        List<AccountResponse> accountResponseList = new GetCustomerAccountsRequester(
+                RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(new TypeRef<List<AccountResponse>>() {});
+
+        softly.assertThat(accountResponseList.getFirst().getBalance()).isEqualTo(0.0f);
+        softly.assertThat(accountResponseList.getFirst().getTransactions()).isEmpty();
     }
 
     @Test
@@ -207,5 +274,15 @@ public class DepositMoneyTest extends BaseTest {
         new DepositMoneyRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsForbidden("Unauthorized access to account"))
                 .post(depositMoneyRequest);
+
+        List<AccountResponse> accountResponseList = new GetCustomerAccountsRequester(
+                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(new TypeRef<List<AccountResponse>>() {});
+
+        softly.assertThat(accountResponseList.getFirst().getTransactions()).isEmpty();
+        softly.assertThat(accountResponseList.getFirst().getBalance()).isEqualTo(0.0f);
     }
 }

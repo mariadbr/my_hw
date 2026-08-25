@@ -11,9 +11,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AccountResponse extends BaseModel{ //нужно ли BaseModel
+public class AccountResponse extends BaseModel{ //нужно ли BaseModel; стоит ли переименовать в Account, тк это не целый response, а только часть
+    //или GetCustomerAccountsResponse ?
     private long id;
     private String accountNumber;
-    private double balance;
-    private List<String> transactions;
+    private float balance;
+    private List<TransactionResponse> transactions;
 }

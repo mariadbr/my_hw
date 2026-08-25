@@ -1,20 +1,23 @@
-package iteration2;
+package iteration2_middle;
 
 import generators.RandomData;
+import io.restassured.common.mapper.TypeRef;
 import models.*;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import requests.AdminCreateUserRequester;
-import requests.CreateAccountRequester;
-import requests.DepositMoneyRequester;
-import requests.TransferMoneyRequester;
+import requests.*;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
-import static io.restassured.RestAssured.given;
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TransferMoneyTest extends BaseTest {
+    private final float MAX_DEPOSIT_AMOUNT = 5000.0f;
+
     @Test
     public void userCanTransferValidAmountIntoSomeonesAccount() {
         CreateUserRequest createFirstUserRequest = CreateUserRequest.builder()
@@ -57,7 +60,7 @@ public class TransferMoneyTest extends BaseTest {
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(createFirstUserAccountResponse.getId())
-                .balance(100f)
+                .balance(MAX_DEPOSIT_AMOUNT)
                 .build();
 
         //депозит
@@ -76,22 +79,61 @@ public class TransferMoneyTest extends BaseTest {
         new TransferMoneyRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
-                .post(transferMoneyRequest);
-        //доделать проверку + скрин
+                .post(transferMoneyRequest)
+                .body("message", Matchers.equalTo("Transfer successful"))
+                .body("amount", Matchers.equalTo(50.05f));
 
-//        //проверка
-//        given()
-//                .contentType(ContentType.JSON)
-//                .accept(ContentType.JSON)
-//                .header("authorization", firstUserAuthToken)
-//                .pathParam("accountId", firstUserAccountId)
-//                .get("http://localhost:4111/api/v1/accounts/{accountId}/transactions")
-//                .then()
-//                .assertThat()
-//                .body("find { it.type == 'TRANSFER_OUT' }.amount", Matchers.equalTo(50.05f))
-//                .body("find { it.type == 'TRANSFER_OUT' }.relatedAccountId", Matchers.equalTo(secondUserAccountId));
+        //проверка счета 1 пользователя
+        List<AccountResponse> firstUserAccountResponseList = new GetCustomerAccountsRequester(
+                RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(new TypeRef<List<AccountResponse>>() {});
+
+        AccountResponse firstUserAccountResponse = firstUserAccountResponseList.stream()
+                .filter(accountResponse -> accountResponse.getId() == createFirstUserAccountResponse.getId())
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(firstUserAccountResponse.getBalance() ,Matchers.equalTo(MAX_DEPOSIT_AMOUNT - 50.05f));
+
+        //проверка счета 2 пользователя
+        List<AccountResponse> secondUserAccountResponseList = new GetCustomerAccountsRequester(
+                RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(new TypeRef<List<AccountResponse>>() {});
+
+        AccountResponse secondUserAccountResponse = secondUserAccountResponseList.stream()
+                .filter(accountResponse -> accountResponse.getId() == createSecondUserAccountResponse.getId())
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(secondUserAccountResponse.getBalance() ,Matchers.equalTo(50.05f));
+
+        //проверка транзакции
+        List<TransactionResponse> transactionResponseList = new GetAccountTransactionsRequester(
+                RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK(),
+                createFirstUserAccountResponse.getId())
+                .get()
+                .extract()
+                .as(new TypeRef<List<TransactionResponse>>() {});
+
+        TransactionResponse firstUserTransactionResponse = transactionResponseList.stream()
+                .filter(transactionResponse -> transactionResponse.getType() == TransactionType.TRANSFER_OUT)
+                .findFirst()
+                .orElseThrow();
+
+        softly.assertThat(firstUserTransactionResponse.getId()).isNotNull();
+        softly.assertThat(firstUserTransactionResponse.getAmount()).isEqualTo(50.05f);
+        softly.assertThat(firstUserTransactionResponse.getRelatedAccountId()).isEqualTo(createSecondUserAccountResponse.getId());
     }
 
+
+    //Вернуться!!
     @CsvSource(value =
             //positive cases
             {"0.01,", "9999.99"})
@@ -154,9 +196,30 @@ public class TransferMoneyTest extends BaseTest {
         new TransferMoneyRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
-                .post(transferMoneyRequest);
+                .post(transferMoneyRequest)
+                .body("message", Matchers.equalTo("Transfer successful"))
+                .body("amount", Matchers.equalTo(amount));
 
+        //проверка 1 и 2 счета
+        List<AccountResponse> accountResponseList = new GetCustomerAccountsRequester(
+                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(new TypeRef<List<AccountResponse>>() {});
 
+        AccountResponse firstAccountResponse = accountResponseList.stream()
+                .filter(accountResponse -> accountResponse.getId() == createFirstAccountResponse.getId())
+                .findFirst()
+                .orElseThrow();
+
+        AccountResponse secondAccountResponse = accountResponseList.stream()
+                .filter(accountResponse -> accountResponse.getId() == createSecondAccountResponse.getId())
+                .findFirst()
+                .orElseThrow();
+
+        softly.assertThat(firstAccountResponse.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT * 2 - amount);
+        softly.assertThat(secondAccountResponse.getBalance()).isEqualTo(amount);
 
 
 //        //проверка
@@ -203,7 +266,7 @@ public class TransferMoneyTest extends BaseTest {
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(createFirstAccountResponse.getId())
-                .balance(600.55f)
+                .balance(MAX_DEPOSIT_AMOUNT)
                 .build();
 
         //депозит денег
@@ -225,6 +288,27 @@ public class TransferMoneyTest extends BaseTest {
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsBadRequestWithText("Transfer amount must be at least 0.01"))
                 .post(transferMoneyRequest);
+
+        //проверка
+        List<AccountResponse> accountResponseList = new GetCustomerAccountsRequester(
+                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(new TypeRef<List<AccountResponse>>() {});
+
+        AccountResponse firstAccountResponse = accountResponseList.stream()
+                .filter(accountResponse -> accountResponse.getId() == createFirstAccountResponse.getId())
+                .findFirst()
+                .orElseThrow();
+
+        AccountResponse secondAccountResponse = accountResponseList.stream()
+                .filter(accountResponse -> accountResponse.getId() == createSecondAccountResponse.getId())
+                .findFirst()
+                .orElseThrow();
+
+        softly.assertThat(firstAccountResponse.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT);
+        softly.assertThat(secondAccountResponse.getBalance()).isEqualTo(0.0f);
     }
 
     @Test
