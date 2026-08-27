@@ -10,6 +10,5 @@ public abstract class PostRequest<T extends BaseModel> extends Request {
         super(requestSpecification, responseSpecification);
     }
 
-    //общий запрос, абстрактный чтобы каждый из детей был обязан имплементировать
     public abstract ValidatableResponse post(T model);
 }

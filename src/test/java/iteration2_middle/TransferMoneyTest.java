@@ -17,7 +17,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TransferMoneyTest extends BaseTest {
-    private final float MAX_DEPOSIT_AMOUNT = 5000.0f;
+    private static final float MAX_DEPOSIT_AMOUNT = 5000.0f;
 
     @Test
     public void userCanTransferValidAmountIntoSomeonesAccount() {
@@ -117,7 +117,7 @@ public class TransferMoneyTest extends BaseTest {
         assertThat(secondUserAccountResponse.getBalance() ,Matchers.equalTo(50.05f));
 
         //проверка транзакции
-        List<TransactionResponse> transactionResponseList = new GetAccountTransactionsRequester(
+        List<TransactionResponse> firstUserTransactionResponseList = new GetAccountTransactionsRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK(),
                 createFirstUserAccountResponse.getId())
@@ -125,21 +125,38 @@ public class TransferMoneyTest extends BaseTest {
                 .extract()
                 .as(new TypeRef<List<TransactionResponse>>() {});
 
-        TransactionResponse firstUserTransactionResponse = transactionResponseList.stream()
+        TransactionResponse firstUserTransactionResponse = firstUserTransactionResponseList.stream()
                 .filter(transactionResponse -> transactionResponse.getType() == TransactionType.TRANSFER_OUT)
+                .findFirst()
+                .orElseThrow();
+
+        List<TransactionResponse> secondUserTransactionResponseList = new GetAccountTransactionsRequester(
+                RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
+                ResponseSpecs.requestReturnsOK(),
+                createSecondUserAccountResponse.getId())
+                .get()
+                .extract()
+                .as(new TypeRef<List<TransactionResponse>>() {});
+
+        TransactionResponse secondUserTransactionResponse = secondUserTransactionResponseList.stream()
+                .filter(transactionResponse -> transactionResponse.getType() == TransactionType.TRANSFER_IN)
                 .findFirst()
                 .orElseThrow();
 
         softly.assertThat(firstUserTransactionResponse.getId()).isNotNull();
         softly.assertThat(firstUserTransactionResponse.getAmount()).isEqualTo(50.05f);
         softly.assertThat(firstUserTransactionResponse.getRelatedAccountId()).isEqualTo(createSecondUserAccountResponse.getId());
+
+        softly.assertThat(secondUserTransactionResponse.getId()).isNotNull();
+        softly.assertThat(secondUserTransactionResponse.getAmount()).isEqualTo(50.05f);
+        softly.assertThat(secondUserTransactionResponse.getRelatedAccountId()).isEqualTo(createFirstUserAccountResponse.getId());
     }
 
     @CsvSource(value =
             //positive cases
             {"0.01,", "9999.99"})
     @ParameterizedTest
-    public void userCanTransferAmountIntoOwnAccount(float amount) {
+    public void userCanTransferAmountBetweenOwnAccounts(float amount) {
         CreateUserRequest createUserRequest = CreateUserRequest.builder()
                 .username(RandomData.getUsername())
                 .password(RandomData.getPassword())
@@ -486,6 +503,6 @@ public class TransferMoneyTest extends BaseTest {
         softly.assertThat(firstUserAccountResponse.getBalance()).isEqualTo(100f);
 
         softly.assertThat(secondUserAccountResponse.getBalance()).isEqualTo(0.0f);
-        softly.assertThat(secondUserAccountResponse.getTransactions().isEmpty());
+        softly.assertThat(secondUserAccountResponse.getTransactions()).isEmpty();
     }
 }

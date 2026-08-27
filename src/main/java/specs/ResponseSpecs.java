@@ -24,7 +24,6 @@ public class ResponseSpecs {
                 .build();
     }
 
-    //все ошибки формата 400 в программе одинаковые, иметь errorKey, errorValue -> часть тестрирвоания дизайна api
     public static ResponseSpecification requestReturnsBadRequest(String errorKey, String errorValue) {
         return defaultResponseBuilder()
                 .expectStatusCode(HttpStatus.SC_BAD_REQUEST)

@@ -94,7 +94,8 @@ public class DepositMoneyTest extends BaseTest {
                 .post(createUserRequest);
 
         //создать аккаунт
-        CreateAccountResponse createAccountResponse = new CreateAccountRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
+        CreateAccountResponse createAccountResponse = new CreateAccountRequester(
+                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
                 .post(null)
                 .extract()
@@ -141,7 +142,8 @@ public class DepositMoneyTest extends BaseTest {
                 .post(createUserRequest);
 
         //создать аккаунт
-        CreateAccountResponse createAccountResponse = new CreateAccountRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
+        CreateAccountResponse createAccountResponse = new CreateAccountRequester(
+                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
                 .post(null)
                 .extract()
