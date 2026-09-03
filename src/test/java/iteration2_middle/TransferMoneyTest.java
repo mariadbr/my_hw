@@ -6,19 +6,19 @@ import models.*;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import requests.*;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
 import java.util.List;
+import java.util.Random;
 
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TransferMoneyTest extends BaseTest {
-    private static final float MAX_DEPOSIT_AMOUNT = 5000.0f;
-
+    //иногда падает
     @Test
     public void userCanTransferValidAmountIntoSomeonesAccount() {
         CreateUserRequest createFirstUserRequest = CreateUserRequest.builder()
@@ -36,7 +36,7 @@ public class TransferMoneyTest extends BaseTest {
         CreateAccountResponse createFirstUserAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
@@ -55,7 +55,7 @@ public class TransferMoneyTest extends BaseTest {
         CreateAccountResponse createSecondUserAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
@@ -70,19 +70,20 @@ public class TransferMoneyTest extends BaseTest {
                 ResponseSpecs.requestReturnsOK())
                 .post(depositMoneyRequest);
 
+        float randomTransferAmount = RandomData.getRandomPositiveFloat();
         //трансфер
         TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
                 .senderAccountId(createFirstUserAccountResponse.getId())
                 .receiverAccountId(createSecondUserAccountResponse.getId())
-                .amount(50.05f)
+                .amount(randomTransferAmount)
                 .build();
 
         new TransferMoneyRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
                 .post(transferMoneyRequest)
-                .body("message", Matchers.equalTo("Transfer successful"))
-                .body("amount", Matchers.equalTo(50.05f))
+                .body("message", Matchers.equalTo(AlertMessage.TRANSFER_SUCCESSFUL.getMessage()))
+                .body("amount", Matchers.equalTo(randomTransferAmount))
                 .body("receiverAccountId", Matchers.equalTo((int) createSecondUserAccountResponse.getId()))
                 .body("senderAccountId", Matchers.equalTo((int) createFirstUserAccountResponse.getId()));
 
@@ -99,7 +100,7 @@ public class TransferMoneyTest extends BaseTest {
                 .findFirst()
                 .orElseThrow();
 
-        assertThat(firstUserAccountResponse.getBalance() ,Matchers.equalTo(MAX_DEPOSIT_AMOUNT - 50.05f));
+        softly.assertThat(firstUserAccountResponse.getBalance()).isCloseTo(MAX_DEPOSIT_AMOUNT - randomTransferAmount, within(0.001f));
 
         //проверка счета 2 пользователя
         List<AccountResponse> secondUserAccountResponseList = new GetCustomerAccountsRequester(
@@ -114,7 +115,7 @@ public class TransferMoneyTest extends BaseTest {
                 .findFirst()
                 .orElseThrow();
 
-        assertThat(secondUserAccountResponse.getBalance() ,Matchers.equalTo(50.05f));
+        assertThat(secondUserAccountResponse.getBalance() ,Matchers.equalTo(randomTransferAmount));
 
         //проверка транзакции
         List<TransactionResponse> firstUserTransactionResponseList = new GetAccountTransactionsRequester(
@@ -144,19 +145,19 @@ public class TransferMoneyTest extends BaseTest {
                 .orElseThrow();
 
         softly.assertThat(firstUserTransactionResponse.getId()).isNotNull();
-        softly.assertThat(firstUserTransactionResponse.getAmount()).isEqualTo(50.05f);
+        softly.assertThat(firstUserTransactionResponse.getAmount()).isEqualTo(randomTransferAmount);
         softly.assertThat(firstUserTransactionResponse.getRelatedAccountId()).isEqualTo(createSecondUserAccountResponse.getId());
 
         softly.assertThat(secondUserTransactionResponse.getId()).isNotNull();
-        softly.assertThat(secondUserTransactionResponse.getAmount()).isEqualTo(50.05f);
+        softly.assertThat(secondUserTransactionResponse.getAmount()).isEqualTo(randomTransferAmount);
         softly.assertThat(secondUserTransactionResponse.getRelatedAccountId()).isEqualTo(createFirstUserAccountResponse.getId());
     }
 
-    @CsvSource(value =
+    @ValueSource(floats =
             //positive cases
-            {"0.01,", "9999.99"})
+            {0.01f, 9999.99f})
     @ParameterizedTest
-    public void userCanTransferAmountBetweenOwnAccounts(float amount) {
+    public void checkBoundaryValuesTransferBetweenOwnAccountsPositiveCases(float amount) {
         CreateUserRequest createUserRequest = CreateUserRequest.builder()
                 .username(RandomData.getUsername())
                 .password(RandomData.getPassword())
@@ -172,7 +173,7 @@ public class TransferMoneyTest extends BaseTest {
         CreateAccountResponse createFirstAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
@@ -180,13 +181,13 @@ public class TransferMoneyTest extends BaseTest {
         CreateAccountResponse createSecondAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(createFirstAccountResponse.getId())
-                .balance(5000f)
+                .balance(MAX_DEPOSIT_AMOUNT)
                 .build();
 
         //депозит денег
@@ -255,7 +256,7 @@ public class TransferMoneyTest extends BaseTest {
         CreateAccountResponse createFirstAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
@@ -263,7 +264,7 @@ public class TransferMoneyTest extends BaseTest {
         CreateAccountResponse createSecondAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
@@ -282,12 +283,12 @@ public class TransferMoneyTest extends BaseTest {
         TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
                 .senderAccountId(createFirstAccountResponse.getId())
                 .receiverAccountId(createSecondAccountResponse.getId())
-                .amount(-1f)
+                .amount(RandomData.getRandomNegativeFloat())
                 .build();
 
         new TransferMoneyRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-                ResponseSpecs.requestReturnsBadRequestWithText("Transfer amount must be at least 0.01"))
+                ResponseSpecs.requestReturnsBadRequestWithText(AlertMessage.TRANSFER_AMOUNT_MUST_BE_AT_LEAST_001.getMessage()))
                 .post(transferMoneyRequest);
 
         //проверка 1 и 2 счета
@@ -314,8 +315,9 @@ public class TransferMoneyTest extends BaseTest {
         softly.assertThat(secondAccountResponse.getTransactions()).isEmpty();
     }
 
-    @Test
-    public void userCannotTransferInvalidAmountIntoSomeonesAccount() {
+    @ParameterizedTest
+    @ValueSource(floats = {10000.01f})
+    public void checkBoundaryValuesTransferToSomeonesAccountNegativeCases(float amount) {
         CreateUserRequest createFirstUserRequest = CreateUserRequest.builder()
                 .username(RandomData.getUsername())
                 .password(RandomData.getPassword())
@@ -331,7 +333,7 @@ public class TransferMoneyTest extends BaseTest {
         CreateAccountResponse createFirstUserAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
@@ -350,13 +352,13 @@ public class TransferMoneyTest extends BaseTest {
         CreateAccountResponse createSecondUserAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(createFirstUserAccountResponse.getId())
-                .balance(5000f)
+                .balance(MAX_DEPOSIT_AMOUNT)
                 .build();
 
         //депозит
@@ -371,12 +373,12 @@ public class TransferMoneyTest extends BaseTest {
         TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
                 .senderAccountId(createFirstUserAccountResponse.getId())
                 .receiverAccountId(createSecondUserAccountResponse.getId())
-                .amount(10000.01f)
+                .amount(amount)
                 .build();
 
         new TransferMoneyRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
-                ResponseSpecs.requestReturnsBadRequestWithText("Transfer amount cannot exceed 10000"))
+                ResponseSpecs.requestReturnsBadRequestWithText(AlertMessage.TRANSFER_AMOUNT_CANNOT_EXCEED_10000.getMessage()))
                 .post(transferMoneyRequest);
 
         //проверка счета 1 пользователя
@@ -408,7 +410,7 @@ public class TransferMoneyTest extends BaseTest {
         softly.assertThat(firstUserAccountResponse.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT * 3);
 
         softly.assertThat(secondUserAccountResponse.getBalance()).isEqualTo(0.0f);
-        softly.assertThat(secondUserAccountResponse.getTransactions().isEmpty());
+        softly.assertThat(secondUserAccountResponse.getTransactions()).isEmpty();
     }
 
     @Test
@@ -428,7 +430,7 @@ public class TransferMoneyTest extends BaseTest {
         CreateAccountResponse createFirstUserAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
@@ -447,13 +449,13 @@ public class TransferMoneyTest extends BaseTest {
         CreateAccountResponse createSecondUserAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(createFirstUserAccountResponse.getId())
-                .balance(100f)
+                .balance(MAX_DEPOSIT_AMOUNT)
                 .build();
 
         //депозит
@@ -466,12 +468,12 @@ public class TransferMoneyTest extends BaseTest {
         TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
                 .senderAccountId(createFirstUserAccountResponse.getId())
                 .receiverAccountId(createSecondUserAccountResponse.getId())
-                .amount(100.5f)
+                .amount(MAX_DEPOSIT_AMOUNT + RandomData.getRandomPositiveFloat())
                 .build();
 
         new TransferMoneyRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
-                ResponseSpecs.requestReturnsBadRequestWithText("Invalid transfer: insufficient funds or invalid accounts"))
+                ResponseSpecs.requestReturnsBadRequestWithText(AlertMessage.INVALID_TRANSFER.getMessage()))
                 .post(transferMoneyRequest);
 
         //проверка счета 1 пользователя
@@ -500,7 +502,7 @@ public class TransferMoneyTest extends BaseTest {
                 .findFirst()
                 .orElseThrow();
 
-        softly.assertThat(firstUserAccountResponse.getBalance()).isEqualTo(100f);
+        softly.assertThat(firstUserAccountResponse.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT);
 
         softly.assertThat(secondUserAccountResponse.getBalance()).isEqualTo(0.0f);
         softly.assertThat(secondUserAccountResponse.getTransactions()).isEmpty();

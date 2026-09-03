@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 public class BaseTest {
     protected SoftAssertions softly;
+    protected static final float MAX_DEPOSIT_AMOUNT = 5000.0f;
 
     @BeforeEach
     public void setupTest() {

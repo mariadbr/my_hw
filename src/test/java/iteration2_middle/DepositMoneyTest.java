@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import requests.AdminCreateUserRequester;
 import requests.CreateAccountRequester;
 import requests.DepositMoneyRequester;
@@ -16,6 +17,7 @@ import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -30,7 +32,7 @@ public class DepositMoneyTest extends BaseTest {
 
     @MethodSource("validUserAndAmountDataForDeposit")
     @ParameterizedTest
-    public void userCanDepositValidAmountIntoOwnAccount(String username, float amount) {
+    public void checkBoundaryValuesDepositPositiveCases(String username, float amount) {
         CreateUserRequest createUserRequest = CreateUserRequest.builder()
                 .username(username)
                 .password(RandomData.getPassword())
@@ -45,7 +47,7 @@ public class DepositMoneyTest extends BaseTest {
         CreateAccountResponse createAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
@@ -80,8 +82,9 @@ public class DepositMoneyTest extends BaseTest {
         assertThat(account.getBalance(), Matchers.equalTo(amount));
     }
 
-    @Test
-    public void userCannotDepositInvalidAmountIntoOwnAccount() {
+    @ParameterizedTest
+    @ValueSource(floats = {5000.01f})
+    public void checkBoundaryValuesDepositNegativeCase(float amount) {
         CreateUserRequest createUserRequest = CreateUserRequest.builder()
                 .username(RandomData.getUsername())
                 .password(RandomData.getPassword())
@@ -97,18 +100,18 @@ public class DepositMoneyTest extends BaseTest {
         CreateAccountResponse createAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(createAccountResponse.getId())
-                .balance(5000.01f)
+                .balance(amount)
                 .build();
 
         //депозит денег
         new DepositMoneyRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-                ResponseSpecs.requestReturnsBadRequestWithText( "Deposit amount cannot exceed 5000"))
+                ResponseSpecs.requestReturnsBadRequestWithText( AlertMessage.DEPOSIT_AMOUNT_CANNOT_EXCEED_5000.getMessage()))
                 .post(depositMoneyRequest);
 
         //проверка
@@ -145,18 +148,18 @@ public class DepositMoneyTest extends BaseTest {
         CreateAccountResponse createAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(createAccountResponse.getId())
-                .balance(-5f)
+                .balance(RandomData.getRandomNegativeFloat())
                 .build();
 
         //депозит денег
         new DepositMoneyRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-                ResponseSpecs.requestReturnsBadRequestWithText( "Deposit amount must be at least 0.01"))
+                ResponseSpecs.requestReturnsBadRequestWithText( AlertMessage.DEPOSIT_AMOUNT_MUST_BE_AT_LEAST_001.getMessage()))
                 .post(depositMoneyRequest);
 
         //проверка
@@ -193,7 +196,7 @@ public class DepositMoneyTest extends BaseTest {
         new CreateAccountRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null);
+                .post();
 
         CreateUserRequest createSecondUserRequest = CreateUserRequest.builder()
                 .username(RandomData.getUsername())
@@ -210,18 +213,18 @@ public class DepositMoneyTest extends BaseTest {
         CreateAccountResponse createSecondUserAccountResponse = new CreateAccountRequester(
                 RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract()
                 .as(CreateAccountResponse.class);
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(createSecondUserAccountResponse.getId())
-                .balance(100.5f)
+                .balance(RandomData.getRandomPositiveFloat())
                 .build();
 
         new DepositMoneyRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
-                ResponseSpecs.requestReturnsForbidden("Unauthorized access to account"))
+                ResponseSpecs.requestReturnsForbidden(AlertMessage.UNAUTHORIZED_ACCESS_TO_ACCOUNT.getMessage()))
                 .post(depositMoneyRequest);
 
         //проверка аккаунта 1 юзера
@@ -264,17 +267,17 @@ public class DepositMoneyTest extends BaseTest {
         new CreateAccountRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null);
+                .post();
 
         //депозит денег
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
-                .id(95)
-                .balance(100.5f)
+                .id(1000)
+                .balance(RandomData.getRandomPositiveFloat())
                 .build();
 
         //депозит денег
         new DepositMoneyRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-                ResponseSpecs.requestReturnsForbidden("Unauthorized access to account"))
+                ResponseSpecs.requestReturnsForbidden(AlertMessage.UNAUTHORIZED_ACCESS_TO_ACCOUNT.getMessage()))
                 .post(depositMoneyRequest);
 
         List<AccountResponse> accountResponseList = new GetCustomerAccountsRequester(
