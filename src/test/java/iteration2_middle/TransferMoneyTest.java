@@ -18,7 +18,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TransferMoneyTest extends BaseTest {
-    //иногда падает
     @Test
     public void userCanTransferValidAmountIntoSomeonesAccount() {
         CreateUserRequest createFirstUserRequest = CreateUserRequest.builder()
