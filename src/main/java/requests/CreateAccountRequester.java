@@ -16,7 +16,7 @@ public class CreateAccountRequester extends PostRequest{
     public ValidatableResponse post(BaseModel model) {
         return given()
                 .spec(requestSpecification)
-                .post("/api/v1/accounts")
+                .post("accounts")
                 .then()
                 .assertThat()
                 .spec(responseSpecification);

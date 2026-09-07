@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TransactionResponse {
+public class GetTransactionResponse extends BaseModel{
     private long id; //транзакции
     private float amount;
     private TransactionType type; //enum?

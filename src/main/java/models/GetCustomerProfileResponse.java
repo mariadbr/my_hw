@@ -17,5 +17,5 @@ public class GetCustomerProfileResponse {
     private String password;
     private String name;
     private UserRole role;
-    private List<AccountResponse> accounts;
+    private List<GetCustomerAccountsResponse> accounts;
 }

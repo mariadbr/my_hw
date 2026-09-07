@@ -17,7 +17,7 @@ public class LoginUserRequester extends PostRequest<LoginUserRequest>{
         return given()
                 .spec(requestSpecification)
                 .body(model)
-                .post("/api/v1/auth/login")
+                .post("auth/login")
                 .then()
                 .assertThat()
                 .spec(responseSpecification);

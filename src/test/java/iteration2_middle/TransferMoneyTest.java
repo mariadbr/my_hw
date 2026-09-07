@@ -8,11 +8,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import requests.*;
+import requests.skelethon.Endpoint;
+import requests.skelethon.requesters.ValidatedCrudRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
 import java.util.List;
-import java.util.Random;
 
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -87,69 +88,75 @@ public class TransferMoneyTest extends BaseTest {
                 .body("senderAccountId", Matchers.equalTo((int) createFirstUserAccountResponse.getId()));
 
         //проверка счета 1 пользователя
-        List<AccountResponse> firstUserAccountResponseList = new GetCustomerAccountsRequester(
+        List<GetCustomerAccountsResponse> firstUserGetCustomerAccountsResponseList = new GetCustomerAccountsRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
                 .get()
                 .extract()
-                .as(new TypeRef<List<AccountResponse>>() {});
+                .as(new TypeRef<List<GetCustomerAccountsResponse>>() {});
 
-        AccountResponse firstUserAccountResponse = firstUserAccountResponseList.stream()
-                .filter(accountResponse -> accountResponse.getId() == createFirstUserAccountResponse.getId())
+        GetCustomerAccountsResponse firstUserGetCustomerAccountsResponse = firstUserGetCustomerAccountsResponseList.stream()
+                .filter(getCustomerAccountResponse -> getCustomerAccountResponse.getId() == createFirstUserAccountResponse.getId())
                 .findFirst()
                 .orElseThrow();
 
-        softly.assertThat(firstUserAccountResponse.getBalance()).isCloseTo(MAX_DEPOSIT_AMOUNT - randomTransferAmount, within(0.001f));
+        softly.assertThat(firstUserGetCustomerAccountsResponse.getBalance()).isCloseTo(MAX_DEPOSIT_AMOUNT - randomTransferAmount, within(0.001f));
 
         //проверка счета 2 пользователя
-        List<AccountResponse> secondUserAccountResponseList = new GetCustomerAccountsRequester(
+        List<GetCustomerAccountsResponse> secondUserGetCustomerAccountsResponseList = new GetCustomerAccountsRequester(
                 RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
                 .get()
                 .extract()
-                .as(new TypeRef<List<AccountResponse>>() {});
+                .as(new TypeRef<List<GetCustomerAccountsResponse>>() {});
 
-        AccountResponse secondUserAccountResponse = secondUserAccountResponseList.stream()
-                .filter(accountResponse -> accountResponse.getId() == createSecondUserAccountResponse.getId())
+        GetCustomerAccountsResponse secondUserGetCustomerAccountsResponse = secondUserGetCustomerAccountsResponseList.stream()
+                .filter(getCustomerAccountResponse -> getCustomerAccountResponse.getId() == createSecondUserAccountResponse.getId())
                 .findFirst()
                 .orElseThrow();
 
-        assertThat(secondUserAccountResponse.getBalance() ,Matchers.equalTo(randomTransferAmount));
+        assertThat(secondUserGetCustomerAccountsResponse.getBalance() ,Matchers.equalTo(randomTransferAmount));
 
         //проверка транзакции
-        List<TransactionResponse> firstUserTransactionResponseList = new GetAccountTransactionsRequester(
+        List<GetTransactionResponse> firstUserGetTransactionResponseList =  new ValidatedCrudRequester<GetTransactionResponse>(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK(),
-                createFirstUserAccountResponse.getId())
-                .get()
-                .extract()
-                .as(new TypeRef<List<TransactionResponse>>() {});
+                Endpoint.ACCOUNT_TRANSACTIONS,
+                ResponseSpecs.requestReturnsOK())
+                .getListById(createFirstUserAccountResponse.getId(), new TypeRef<List<GetTransactionResponse>>() {});
 
-        TransactionResponse firstUserTransactionResponse = firstUserTransactionResponseList.stream()
+//        List<GetTransactionResponse> firstUserGetTransactionResponseList = new GetAccountTransactionsRequester(
+//                RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
+//                ResponseSpecs.requestReturnsOK(),
+//                createFirstUserAccountResponse.getId())
+//                .get()
+//                .extract()
+//                .as(new TypeRef<List<GetTransactionResponse>>() {});
+
+        GetTransactionResponse firstUserGetTransactionResponse = firstUserGetTransactionResponseList.stream()
                 .filter(transactionResponse -> transactionResponse.getType() == TransactionType.TRANSFER_OUT)
                 .findFirst()
                 .orElseThrow();
 
-        List<TransactionResponse> secondUserTransactionResponseList = new GetAccountTransactionsRequester(
+        List<GetTransactionResponse> secondUserGetTransactionResponseList = new GetAccountTransactionsRequester(
                 RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK(),
                 createSecondUserAccountResponse.getId())
                 .get()
                 .extract()
-                .as(new TypeRef<List<TransactionResponse>>() {});
+                .as(new TypeRef<List<GetTransactionResponse>>() {});
 
-        TransactionResponse secondUserTransactionResponse = secondUserTransactionResponseList.stream()
+        GetTransactionResponse secondUserGetTransactionResponse = secondUserGetTransactionResponseList.stream()
                 .filter(transactionResponse -> transactionResponse.getType() == TransactionType.TRANSFER_IN)
                 .findFirst()
                 .orElseThrow();
 
-        softly.assertThat(firstUserTransactionResponse.getId()).isNotNull();
-        softly.assertThat(firstUserTransactionResponse.getAmount()).isEqualTo(randomTransferAmount);
-        softly.assertThat(firstUserTransactionResponse.getRelatedAccountId()).isEqualTo(createSecondUserAccountResponse.getId());
+        softly.assertThat(firstUserGetTransactionResponse.getId()).isNotNull();
+        softly.assertThat(firstUserGetTransactionResponse.getAmount()).isEqualTo(randomTransferAmount);
+        softly.assertThat(firstUserGetTransactionResponse.getRelatedAccountId()).isEqualTo(createSecondUserAccountResponse.getId());
 
-        softly.assertThat(secondUserTransactionResponse.getId()).isNotNull();
-        softly.assertThat(secondUserTransactionResponse.getAmount()).isEqualTo(randomTransferAmount);
-        softly.assertThat(secondUserTransactionResponse.getRelatedAccountId()).isEqualTo(createFirstUserAccountResponse.getId());
+        softly.assertThat(secondUserGetTransactionResponse.getId()).isNotNull();
+        softly.assertThat(secondUserGetTransactionResponse.getAmount()).isEqualTo(randomTransferAmount);
+        softly.assertThat(secondUserGetTransactionResponse.getRelatedAccountId()).isEqualTo(createFirstUserAccountResponse.getId());
     }
 
     @ValueSource(floats =
@@ -214,28 +221,28 @@ public class TransferMoneyTest extends BaseTest {
                 .body("senderAccountId", Matchers.equalTo((int) createFirstAccountResponse.getId()));
 
         //проверка 1 и 2 счета
-        List<AccountResponse> accountResponseList = new GetCustomerAccountsRequester(
+        List<GetCustomerAccountsResponse> getCustomerAccountsResponseList = new GetCustomerAccountsRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
                 .get()
                 .extract()
-                .as(new TypeRef<List<AccountResponse>>() {});
+                .as(new TypeRef<List<GetCustomerAccountsResponse>>() {});
 
-        AccountResponse firstAccountResponse = accountResponseList.stream()
-                .filter(accountResponse -> accountResponse.getId() == createFirstAccountResponse.getId())
+        GetCustomerAccountsResponse firstGetCustomerAccountsResponse = getCustomerAccountsResponseList.stream()
+                .filter(getCustomerAccountResponse -> getCustomerAccountResponse.getId() == createFirstAccountResponse.getId())
                 .findFirst()
                 .orElseThrow();
 
-        AccountResponse secondAccountResponse = accountResponseList.stream()
-                .filter(accountResponse -> accountResponse.getId() == createSecondAccountResponse.getId())
+        GetCustomerAccountsResponse secondGetCustomerAccountsResponse = getCustomerAccountsResponseList.stream()
+                .filter(getCustomerAccountResponse -> getCustomerAccountResponse.getId() == createSecondAccountResponse.getId())
                 .findFirst()
                 .orElseThrow();
 
-        softly.assertThat(firstAccountResponse.getBalance()).isCloseTo(MAX_DEPOSIT_AMOUNT * 2 - amount, within(0.001f));
-        softly.assertThat(firstAccountResponse.getTransactions()).isNotEmpty();
+        softly.assertThat(firstGetCustomerAccountsResponse.getBalance()).isCloseTo(MAX_DEPOSIT_AMOUNT * 2 - amount, within(0.001f));
+        softly.assertThat(firstGetCustomerAccountsResponse.getTransactions()).isNotEmpty();
 
-        softly.assertThat(secondAccountResponse.getBalance()).isEqualTo(amount);
-        softly.assertThat(secondAccountResponse.getTransactions()).isNotEmpty();
+        softly.assertThat(secondGetCustomerAccountsResponse.getBalance()).isEqualTo(amount);
+        softly.assertThat(secondGetCustomerAccountsResponse.getTransactions()).isNotEmpty();
     }
 
     @Test
@@ -291,27 +298,27 @@ public class TransferMoneyTest extends BaseTest {
                 .post(transferMoneyRequest);
 
         //проверка 1 и 2 счета
-        List<AccountResponse> accountResponseList = new GetCustomerAccountsRequester(
+        List<GetCustomerAccountsResponse> getCustomerAccountsResponseList = new GetCustomerAccountsRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
                 .get()
                 .extract()
-                .as(new TypeRef<List<AccountResponse>>() {});
+                .as(new TypeRef<List<GetCustomerAccountsResponse>>() {});
 
-        AccountResponse firstAccountResponse = accountResponseList.stream()
-                .filter(accountResponse -> accountResponse.getId() == createFirstAccountResponse.getId())
+        GetCustomerAccountsResponse firstGetCustomerAccountsResponse = getCustomerAccountsResponseList.stream()
+                .filter(getCustomerAccountResponse -> getCustomerAccountResponse.getId() == createFirstAccountResponse.getId())
                 .findFirst()
                 .orElseThrow();
 
-        AccountResponse secondAccountResponse = accountResponseList.stream()
-                .filter(accountResponse -> accountResponse.getId() == createSecondAccountResponse.getId())
+        GetCustomerAccountsResponse secondGetCustomerAccountsResponse = getCustomerAccountsResponseList.stream()
+                .filter(getCustomerAccountResponse -> getCustomerAccountResponse.getId() == createSecondAccountResponse.getId())
                 .findFirst()
                 .orElseThrow();
 
-        softly.assertThat(firstAccountResponse.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT);
+        softly.assertThat(firstGetCustomerAccountsResponse.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT);
 
-        softly.assertThat(secondAccountResponse.getBalance()).isEqualTo(0.0f);
-        softly.assertThat(secondAccountResponse.getTransactions()).isEmpty();
+        softly.assertThat(secondGetCustomerAccountsResponse.getBalance()).isEqualTo(0.0f);
+        softly.assertThat(secondGetCustomerAccountsResponse.getTransactions()).isEmpty();
     }
 
     @ParameterizedTest
@@ -381,35 +388,35 @@ public class TransferMoneyTest extends BaseTest {
                 .post(transferMoneyRequest);
 
         //проверка счета 1 пользователя
-        List<AccountResponse> firstUserAccountResponseList = new GetCustomerAccountsRequester(
+        List<GetCustomerAccountsResponse> firstUserGetCustomerAccountsResponseList = new GetCustomerAccountsRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
                 .get()
                 .extract()
-                .as(new TypeRef<List<AccountResponse>>() {});
+                .as(new TypeRef<List<GetCustomerAccountsResponse>>() {});
 
-        AccountResponse firstUserAccountResponse = firstUserAccountResponseList.stream()
-                .filter(accountResponse -> accountResponse.getId() == createFirstUserAccountResponse.getId())
+        GetCustomerAccountsResponse firstUserGetCustomerAccountsResponse = firstUserGetCustomerAccountsResponseList.stream()
+                .filter(getCustomerAccountResponse -> getCustomerAccountResponse.getId() == createFirstUserAccountResponse.getId())
                 .findFirst()
                 .orElseThrow();
 
         //проверка счета 2 пользователя
-        List<AccountResponse> secondUserAccountResponseList = new GetCustomerAccountsRequester(
+        List<GetCustomerAccountsResponse> secondUserGetCustomerAccountsResponseList = new GetCustomerAccountsRequester(
                 RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
                 .get()
                 .extract()
-                .as(new TypeRef<List<AccountResponse>>() {});
+                .as(new TypeRef<List<GetCustomerAccountsResponse>>() {});
 
-        AccountResponse secondUserAccountResponse = secondUserAccountResponseList.stream()
-                .filter(accountResponse -> accountResponse.getId() == createSecondUserAccountResponse.getId())
+        GetCustomerAccountsResponse secondUserGetCustomerAccountsResponse = secondUserGetCustomerAccountsResponseList.stream()
+                .filter(getCustomerAccountResponse -> getCustomerAccountResponse.getId() == createSecondUserAccountResponse.getId())
                 .findFirst()
                 .orElseThrow();
 
-        softly.assertThat(firstUserAccountResponse.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT * 3);
+        softly.assertThat(firstUserGetCustomerAccountsResponse.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT * 3);
 
-        softly.assertThat(secondUserAccountResponse.getBalance()).isEqualTo(0.0f);
-        softly.assertThat(secondUserAccountResponse.getTransactions()).isEmpty();
+        softly.assertThat(secondUserGetCustomerAccountsResponse.getBalance()).isEqualTo(0.0f);
+        softly.assertThat(secondUserGetCustomerAccountsResponse.getTransactions()).isEmpty();
     }
 
     @Test
@@ -476,34 +483,34 @@ public class TransferMoneyTest extends BaseTest {
                 .post(transferMoneyRequest);
 
         //проверка счета 1 пользователя
-        List<AccountResponse> firstUserAccountResponseList = new GetCustomerAccountsRequester(
+        List<GetCustomerAccountsResponse> firstUserGetCustomerAccountsResponseList = new GetCustomerAccountsRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
                 .get()
                 .extract()
-                .as(new TypeRef<List<AccountResponse>>() {});
+                .as(new TypeRef<List<GetCustomerAccountsResponse>>() {});
 
-        AccountResponse firstUserAccountResponse = firstUserAccountResponseList.stream()
-                .filter(accountResponse -> accountResponse.getId() == createFirstUserAccountResponse.getId())
+        GetCustomerAccountsResponse firstUserGetCustomerAccountsResponse = firstUserGetCustomerAccountsResponseList.stream()
+                .filter(getCustomerAccountResponse -> getCustomerAccountResponse.getId() == createFirstUserAccountResponse.getId())
                 .findFirst()
                 .orElseThrow();
 
         //проверка счета 2 пользователя
-        List<AccountResponse> secondUserAccountResponseList = new GetCustomerAccountsRequester(
+        List<GetCustomerAccountsResponse> secondUserGetCustomerAccountsResponseList = new GetCustomerAccountsRequester(
                 RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
                 .get()
                 .extract()
-                .as(new TypeRef<List<AccountResponse>>() {});
+                .as(new TypeRef<List<GetCustomerAccountsResponse>>() {});
 
-        AccountResponse secondUserAccountResponse = secondUserAccountResponseList.stream()
-                .filter(accountResponse -> accountResponse.getId() == createSecondUserAccountResponse.getId())
+        GetCustomerAccountsResponse secondUserGetCustomerAccountsResponse = secondUserGetCustomerAccountsResponseList.stream()
+                .filter(getCustomerAccountResponse -> getCustomerAccountResponse.getId() == createSecondUserAccountResponse.getId())
                 .findFirst()
                 .orElseThrow();
 
-        softly.assertThat(firstUserAccountResponse.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT);
+        softly.assertThat(firstUserGetCustomerAccountsResponse.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT);
 
-        softly.assertThat(secondUserAccountResponse.getBalance()).isEqualTo(0.0f);
-        softly.assertThat(secondUserAccountResponse.getTransactions()).isEmpty();
+        softly.assertThat(secondUserGetCustomerAccountsResponse.getBalance()).isEqualTo(0.0f);
+        softly.assertThat(secondUserGetCustomerAccountsResponse.getTransactions()).isEmpty();
     }
 }
