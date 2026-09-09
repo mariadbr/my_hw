@@ -9,10 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class GetTransactionResponse extends BaseModel{
-    private long id; //транзакции
+public class TransferMoneyResponse extends BaseModel{
+    private long senderAccountId;
+    private long receiverAccountId;
     private float amount;
-    private TransactionType type;
-    private String timestamp;
-    private long relatedAccountId;
+    private String message;
 }

@@ -3,17 +3,17 @@ package requests;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
-import models.UpdateNameRequest;
+import models.UpdateCustomerProfileRequest;
 
 import static io.restassured.RestAssured.given;
 
-public class UpdateNameRequester extends PutRequest<UpdateNameRequest>{
+public class UpdateNameRequester extends PutRequest<UpdateCustomerProfileRequest>{
     public UpdateNameRequester(RequestSpecification requestSpecification, ResponseSpecification responseSpecification) {
         super(requestSpecification, responseSpecification);
     }
 
     @Override
-    public ValidatableResponse sendPut(UpdateNameRequest model) {
+    public ValidatableResponse sendPut(UpdateCustomerProfileRequest model) {
         return given()
                 .spec(requestSpecification)
                 .body(model)

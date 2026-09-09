@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class GetCustomerProfileResponse {
+public class GetCustomerProfileResponse extends BaseModel{
     private long id;
     private String username;
     private String password;

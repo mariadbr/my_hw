@@ -10,8 +10,6 @@ import requests.skelethon.interfaces.CrudEndpointInterface;
 
 import java.util.List;
 
-import static io.restassured.RestAssured.given;
-
 public class ValidatedCrudRequester<T extends BaseModel> extends HttpRequest implements CrudEndpointInterface{
     private CrudRequester crudRequester;
 
@@ -30,13 +28,13 @@ public class ValidatedCrudRequester<T extends BaseModel> extends HttpRequest imp
     }
 
     @Override
-    public T get(long id) {
-        return null;
+    public T get() {
+        return (T) crudRequester.get().extract().as(endpoint.getResponseModel());
     }
 
     @Override
-    public Object update(long id, BaseModel model) {
-        return null;
+    public T put(BaseModel model) {
+        return (T) crudRequester.put(model).extract().as(endpoint.getResponseModel());
     }
 
     @Override

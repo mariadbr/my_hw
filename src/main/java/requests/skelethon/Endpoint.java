@@ -27,6 +27,21 @@ public enum Endpoint {
             DepositMoneyRequest.class,
             DepositMoneyResponse.class
     ),
+    ACCOUNTS_TRANSFER(
+            "/accounts/transfer",
+            TransferMoneyRequest.class,
+            TransferMoneyResponse.class
+    ),
+    UPDATE_CUSTOMER_PROFILE(
+            "/customer/profile",
+            UpdateCustomerProfileRequest.class,
+            UpdateCustomerProfileResponse.class
+    ),
+    GET_CUSTOMER_PROFILE(
+            "/customer/profile",
+            BaseModel.class,
+            GetCustomerProfileResponse.class
+    ),
     //список
     CUSTOMER_ACCOUNTS(
             "/customer/accounts",

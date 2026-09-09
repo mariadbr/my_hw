@@ -14,7 +14,10 @@ public enum AlertMessage {
     TRANSFER_AMOUNT_CANNOT_EXCEED_10000("Transfer amount cannot exceed 10000"),
     INVALID_TRANSFER("Invalid transfer: insufficient funds or invalid accounts"),
 
-    TRANSFER_SUCCESSFUL("Transfer successful");
+    TRANSFER_SUCCESSFUL("Transfer successful"),
+    PROFILE_UPDATED_SUCCESSFULLY("Profile updated successfully"),
+
+    NAME_MUST_CONTAIN_TWO_WORDS("Name must contain two words with letters only");
 
     private final String message;
 }
