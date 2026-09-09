@@ -19,15 +19,14 @@ public class UserSteps {
                 .post();
     }
 
-//    public static DepositMoneyResponse depositMoney(String username, String password, DepositMoneyRequest depositMoneyRequest) {
-//        return new ValidatedCrudRequester<DepositMoneyResponse>(
-//                RequestSpecs.authAsUser(username, password),
-//                Endpoint.ACCOUNTS_DEPOSIT,
-//                ResponseSpecs.requestReturnsOK())
-//                .post(depositMoneyRequest);
-//    }
+    public static DepositMoneyResponse depositMoney(String username, String password, DepositMoneyRequest depositMoneyRequest) {
+        return new ValidatedCrudRequester<DepositMoneyResponse>(
+                RequestSpecs.authAsUser(username, password),
+                Endpoint.ACCOUNTS_DEPOSIT,
+                ResponseSpecs.requestReturnsOK())
+                .post(depositMoneyRequest);
+    }
 
-    //нужен ли этот метод или он избыточный (тк он проверяет на конкретном значении и нерасширяемый) и нужно использовать предыдущий и туда везде передавать модель ?
     public static DepositMoneyResponse depositMaxDepositAmount(long accountId, String username, String password) {
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(accountId)

@@ -42,12 +42,6 @@ public class ValidatedCrudRequester<T extends BaseModel> extends HttpRequest imp
         return null;
     }
 
-//    @Override
-//    public Object getList() {
-//        return crudRequester.getList().extract().as(new TypeRef<List<GetCustomerAccountResponse>>() {}); //или нужен дженерик? как сделать его универсальным?
-//
-//    }
-
     public <R> List<R> getList(TypeRef<List<R>> typeRef) {
         return crudRequester
                 .getList()

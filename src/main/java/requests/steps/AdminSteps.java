@@ -10,7 +10,7 @@ import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
 public class AdminSteps {
-    public static CreateUserRequest createUserGetRequest() {
+    public static CreateUserRequest createUserReturnRequest() {
         CreateUserRequest createUserRequest =
                 RandomModelGenerator.generate(CreateUserRequest.class);
 
@@ -23,7 +23,7 @@ public class AdminSteps {
          return createUserRequest;
     }
 
-    public static CreateUserResponse createUserGetResponse(CreateUserRequest createUserRequest) {
+    public static CreateUserResponse createUserReturnResponse(CreateUserRequest createUserRequest) {
 
         return new ValidatedCrudRequester<CreateUserResponse>(
                 RequestSpecs.adminSpec(),

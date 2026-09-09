@@ -1,8 +1,8 @@
-package iteration2_middle;
+package iteration2_senior;
 
 import generators.RandomData;
 import models.*;
-import org.hamcrest.Matchers;
+import models.comparison.ModelAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -10,17 +10,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import requests.skelethon.Endpoint;
 import requests.skelethon.requesters.CrudRequester;
-import requests.skelethon.requesters.ValidatedCrudRequester;
 import requests.steps.AdminSteps;
-import models.UserBalanceDefaults;
 import requests.steps.UserSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
 import java.util.List;
 import java.util.stream.Stream;
-
-import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DepositMoneyTest extends BaseTest {
 
@@ -47,11 +43,6 @@ public class DepositMoneyTest extends BaseTest {
 
         //создать аккаунт
         CreateAccountResponse createAccountResponse = UserSteps.createAccount(createUserRequest.getUsername(), createUserRequest.getPassword());
-//       CreateAccountResponse createAccountResponse = new ValidatedCrudRequester<CreateAccountResponse>(
-//               RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-//               Endpoint.ACCOUNTS,
-//               ResponseSpecs.entityWasCreated())
-//               .post();
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(createAccountResponse.getId())
@@ -59,50 +50,32 @@ public class DepositMoneyTest extends BaseTest {
                 .build();
 
         //депозит денег
-        DepositMoneyResponse depositMoneyResponse = new ValidatedCrudRequester<DepositMoneyResponse>(
-                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-                Endpoint.ACCOUNTS_DEPOSIT,
-                ResponseSpecs.requestReturnsOK())
-                .post(depositMoneyRequest);
+        DepositMoneyResponse depositMoneyResponse = UserSteps.depositMoney(
+                createUserRequest.getUsername(), createUserRequest.getPassword(), depositMoneyRequest);
 
-        assertThat(depositMoneyResponse.getBalance(), Matchers.equalTo(amount));
+        ModelAssertions.assertThatModels(depositMoneyRequest, depositMoneyResponse).match();
+        softly.assertThat(depositMoneyResponse.getTransactions()).isNotEmpty();
 
         //проверка
         List<GetCustomerAccountsResponse> list = UserSteps.getAccounts(createUserRequest.getUsername(), createUserRequest.getPassword());
-//        List<GetCustomerAccountsResponse> list = new ValidatedCrudRequester<GetCustomerAccountsResponse>(
-//                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-//                Endpoint.CUSTOMER_ACCOUNTS,
-//                ResponseSpecs.requestReturnsOK())
-//                .getList(new TypeRef<List<GetCustomerAccountsResponse>>() {});
 
         GetCustomerAccountsResponse account = list.stream()
                 .filter(getCustomerAccountsResponse -> getCustomerAccountsResponse.getId() == createAccountResponse.getId())
                 .findFirst()
                 .orElseThrow();
 
-        assertThat(account.getBalance(), Matchers.equalTo(amount));
+        softly.assertThat(account.getBalance()).isEqualTo(amount);
+        softly.assertThat(account.getTransactions()).isNotEmpty();
     }
 
     @ParameterizedTest
     @ValueSource(floats = {5000.01f})
     public void checkBoundaryValuesDepositNegativeCase(float amount) {
-//        CreateUserRequest createUserRequest = RandomModelGenerator.generate(CreateUserRequest.class);
-
         //создать юзера
-        CreateUserRequest createUserRequest = AdminSteps.createUserGetRequest();
-//        new CrudRequester(
-//                RequestSpecs.adminSpec(),
-//                Endpoint.ADMIN_USERS,
-//                ResponseSpecs.entityWasCreated())
-//                .post(createUserRequest);
+        CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать аккаунт
         CreateAccountResponse createAccountResponse = UserSteps.createAccount(createUserRequest.getUsername(), createUserRequest.getPassword());
-//        CreateAccountResponse createAccountResponse = new ValidatedCrudRequester<CreateAccountResponse>(
-//                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-//                Endpoint.ACCOUNTS,
-//                ResponseSpecs.entityWasCreated())
-//                .post();
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(createAccountResponse.getId())
@@ -119,11 +92,6 @@ public class DepositMoneyTest extends BaseTest {
         //проверка
         List<GetCustomerAccountsResponse> getCustomerAccountResponseList = UserSteps.getAccounts(
                 createUserRequest.getUsername(), createUserRequest.getPassword());
-//        List<GetCustomerAccountsResponse> getCustomerAccountResponseList = new ValidatedCrudRequester<GetCustomerAccountsResponse>(
-//                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-//                Endpoint.CUSTOMER_ACCOUNTS,
-//                ResponseSpecs.requestReturnsOK())
-//                .getList(new TypeRef<List<GetCustomerAccountsResponse>>() {});
 
         GetCustomerAccountsResponse account = getCustomerAccountResponseList.stream()
                 .filter(getCustomerAccountsResponse -> getCustomerAccountsResponse.getId() == createAccountResponse.getId())
@@ -132,27 +100,15 @@ public class DepositMoneyTest extends BaseTest {
 
         softly.assertThat(account.getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
         softly.assertThat(account.getTransactions()).isEmpty();
+        softly.assertThat(account.getId()).isEqualTo(createAccountResponse.getId());
     }
 
     @Test
     public void userCannotDepositNegativeAmountIntoOwnAccount() {
-        //CreateUserRequest createUserRequest = RandomModelGenerator.generate(CreateUserRequest.class);
-
         //создать юзера
-//        new CrudRequester(
-//                RequestSpecs.adminSpec(),
-//                Endpoint.ADMIN_USERS,
-//                ResponseSpecs.entityWasCreated())
-//                .post(createUserRequest);
-
-        CreateUserRequest createUserRequest = AdminSteps.createUserGetRequest();
+        CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать аккаунт
-//        CreateAccountResponse createAccountResponse = new ValidatedCrudRequester<CreateAccountResponse>(
-//                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-//                Endpoint.ACCOUNTS,
-//                ResponseSpecs.entityWasCreated())
-//                .post();
         CreateAccountResponse createAccountResponse = UserSteps.createAccount(createUserRequest.getUsername(), createUserRequest.getPassword());
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
@@ -168,11 +124,6 @@ public class DepositMoneyTest extends BaseTest {
                 .post(depositMoneyRequest);
 
         //проверка
-//        List<GetCustomerAccountsResponse> getCustomerAccountsResponseList = new ValidatedCrudRequester<GetCustomerAccountsResponse>(
-//                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-//                Endpoint.CUSTOMER_ACCOUNTS,
-//                ResponseSpecs.requestReturnsOK())
-//                .getList(new TypeRef<List<GetCustomerAccountsResponse>>() {});
         List<GetCustomerAccountsResponse> getCustomerAccountsResponseList = UserSteps.getAccounts(
                 createUserRequest.getUsername(), createUserRequest.getPassword());
 
@@ -183,46 +134,24 @@ public class DepositMoneyTest extends BaseTest {
 
         softly.assertThat(account.getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
         softly.assertThat(account.getTransactions()).isEmpty();
+        softly.assertThat(account.getId()).isEqualTo(createAccountResponse.getId());
     }
 
     @Test
     public void userCannotDepositAmountIntoSomeonesAccount() {
-        //CreateUserRequest createFirstUserRequest = RandomModelGenerator.generate(CreateUserRequest.class);
-
         //создать 1 юзера
-        CreateUserRequest createFirstUserRequest = AdminSteps.createUserGetRequest();
-//        new CrudRequester(
-//                RequestSpecs.adminSpec(),
-//                Endpoint.ADMIN_USERS,
-//                ResponseSpecs.entityWasCreated())
-//                .post(createFirstUserRequest);
+        CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать аккаунт 1 юзера
-        UserSteps.createAccount(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
-//        new CrudRequester(
-//                RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
-//                Endpoint.ACCOUNTS,
-//                ResponseSpecs.entityWasCreated())
-//                .post();
-
-        //CreateUserRequest createSecondUserRequest = RandomModelGenerator.generate(CreateUserRequest.class);
+        CreateAccountResponse createFirstUserAccountResponse = UserSteps.createAccount(
+                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
 
         //создать 2 юзера
-        CreateUserRequest createSecondUserRequest = AdminSteps.createUserGetRequest();
-//        new CrudRequester(
-//                RequestSpecs.adminSpec(),
-//                Endpoint.ADMIN_USERS,
-//                ResponseSpecs.entityWasCreated())
-//                .post(createSecondUserRequest);
+        CreateUserRequest createSecondUserRequest = AdminSteps.createUserReturnRequest();
 
-        //создать аккаунт 2 юзера
+       //создать аккаунт 2 юзера
         CreateAccountResponse createSecondUserAccountResponse = UserSteps.createAccount(
                 createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword());
-//        CreateAccountResponse createSecondUserAccountResponse = new ValidatedCrudRequester<CreateAccountResponse>(
-//                RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
-//                Endpoint.ACCOUNTS,
-//                ResponseSpecs.entityWasCreated())
-//                .post();
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(createSecondUserAccountResponse.getId())
@@ -240,48 +169,28 @@ public class DepositMoneyTest extends BaseTest {
         List<GetCustomerAccountsResponse> firstUserGetCustomerAccountsResponseList = UserSteps.getAccounts(
                 createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
 
-//        List<GetCustomerAccountsResponse> firstUserGetCustomerAccountsResponseList = new ValidatedCrudRequester<GetCustomerAccountsResponse>(
-//                RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
-//                Endpoint.CUSTOMER_ACCOUNTS,
-//                ResponseSpecs.requestReturnsOK())
-//                .getList(new TypeRef<List<GetCustomerAccountsResponse>>() {});
-
         softly.assertThat(firstUserGetCustomerAccountsResponseList.getFirst().getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
         softly.assertThat(firstUserGetCustomerAccountsResponseList.getFirst().getTransactions()).isEmpty();
+        softly.assertThat(firstUserGetCustomerAccountsResponseList.getFirst().getId()).isEqualTo(createFirstUserAccountResponse.getId());
 
         //проверка аккаунта 2 юзера
         List<GetCustomerAccountsResponse> secondUserGetCustomerAccountsResponseList = UserSteps.getAccounts(
                 createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword());
 
-//        List<GetCustomerAccountsResponse> secondUserGetCustomerAccountsResponseList = new ValidatedCrudRequester<GetCustomerAccountsResponse>(
-//                RequestSpecs.authAsUser(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()),
-//                Endpoint.CUSTOMER_ACCOUNTS,
-//                ResponseSpecs.requestReturnsOK())
-//                .getList(new TypeRef<List<GetCustomerAccountsResponse>>() {});
-
         softly.assertThat(secondUserGetCustomerAccountsResponseList.getFirst().getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
         softly.assertThat(secondUserGetCustomerAccountsResponseList.getFirst().getTransactions()).isEmpty();
+        softly.assertThat(secondUserGetCustomerAccountsResponseList.getFirst().getId()).isEqualTo(createSecondUserAccountResponse.getId());
+
     }
 
     @Test
     public void userCannotDepositAmountIntoNonExistentAccount() {
-//        CreateUserRequest createUserRequest = RandomModelGenerator.generate(CreateUserRequest.class);
-
         //создать юзера
-        CreateUserRequest createUserRequest = AdminSteps.createUserGetRequest();
-//        new CrudRequester(
-//                RequestSpecs.adminSpec(),
-//                Endpoint.ADMIN_USERS,
-//                ResponseSpecs.entityWasCreated())
-//                .post(createUserRequest);
+        CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать аккаунт
-        UserSteps.createAccount(createUserRequest.getUsername(), createUserRequest.getPassword());
-//        new CrudRequester(
-//                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-//                Endpoint.ACCOUNTS,
-//                ResponseSpecs.entityWasCreated())
-//                .post();
+        CreateAccountResponse createAccountResponse = UserSteps.createAccount(
+                createUserRequest.getUsername(), createUserRequest.getPassword());
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
                 .id(1000)
@@ -298,12 +207,8 @@ public class DepositMoneyTest extends BaseTest {
         //проверка
         List<GetCustomerAccountsResponse> getCustomerAccountsResponseList = UserSteps.getAccounts(
                 createUserRequest.getUsername(), createUserRequest.getPassword());
-//        List<GetCustomerAccountsResponse> getCustomerAccountsResponseList = new ValidatedCrudRequester<GetCustomerAccountsResponse>(
-//                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-//                Endpoint.CUSTOMER_ACCOUNTS,
-//                ResponseSpecs.requestReturnsOK())
-//                .getList(new TypeRef<List<GetCustomerAccountsResponse>>() {});
 
+        softly.assertThat(getCustomerAccountsResponseList.getFirst().getId()).isEqualTo(createAccountResponse.getId());
         softly.assertThat(getCustomerAccountsResponseList.getFirst().getTransactions()).isEmpty();
         softly.assertThat(getCustomerAccountsResponseList.getFirst().getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
     }

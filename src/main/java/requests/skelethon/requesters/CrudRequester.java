@@ -11,7 +11,6 @@ import requests.skelethon.interfaces.GetAll;
 
 import static io.restassured.RestAssured.given;
 
-//CrudRequester, который никак не серелизует ответ в конкретный класс
 public class CrudRequester extends HttpRequest implements CrudEndpointInterface, GetAll {
     public CrudRequester(RequestSpecification requestSpecification, Endpoint endpoint, ResponseSpecification responseSpecification) {
         super(requestSpecification, endpoint, responseSpecification);

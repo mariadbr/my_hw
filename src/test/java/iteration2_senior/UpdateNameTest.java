@@ -1,4 +1,4 @@
-package iteration2_middle;
+package iteration2_senior;
 
 import generators.RandomModelGenerator;
 import models.*;
@@ -18,11 +18,7 @@ public class UpdateNameTest extends BaseTest {
         CreateUserRequest createUserRequest = RandomModelGenerator.generate(CreateUserRequest.class);
 
         //создание пользователя
-        CreateUserResponse createUserResponse = AdminSteps.createUserGetResponse(createUserRequest);
-//        CreateUserResponse createUserResponse = new ValidatedCrudRequester<CreateUserResponse>(RequestSpecs.adminSpec(),
-//                Endpoint.ADMIN_USERS,
-//                ResponseSpecs.entityWasCreated())
-//                .post(createUserRequest);
+        CreateUserResponse createUserResponse = AdminSteps.createUserReturnResponse(createUserRequest);
 
         String updatedName = "Stas St";
 
@@ -33,29 +29,25 @@ public class UpdateNameTest extends BaseTest {
         //изменение имени
         UpdateCustomerProfileResponse updateCustomerProfileResponse = UserSteps.updateProfile(
                 createUserRequest.getUsername(), createUserRequest.getPassword(), updateCustomerProfileRequest);
-//        UpdateCustomerProfileResponse updateCustomerProfileResponse = new ValidatedCrudRequester<UpdateCustomerProfileResponse>(
-//                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-//                Endpoint.UPDATE_CUSTOMER_PROFILE,
-//                ResponseSpecs.requestReturnsOK())
-//                .put(updateCustomerProfileRequest);
 
-        softly.assertThat(updateCustomerProfileResponse.getCustomer().getName()).isEqualTo(updatedName);
         softly.assertThat(updateCustomerProfileResponse.getMessage()).isEqualTo(AlertMessage.PROFILE_UPDATED_SUCCESSFULLY.getMessage());
+        softly.assertThat(updateCustomerProfileResponse.getCustomer().getId()).isEqualTo(createUserResponse.getId());
+        softly.assertThat(updateCustomerProfileResponse.getCustomer().getUsername()).isEqualTo(createUserResponse.getUsername());
+        softly.assertThat(updateCustomerProfileResponse.getCustomer().getPassword()).isNotEqualTo(createUserRequest.getPassword());
+        softly.assertThat(updateCustomerProfileResponse.getCustomer().getName()).isEqualTo(updateCustomerProfileRequest.getName());
+        softly.assertThat(updateCustomerProfileResponse.getCustomer().getRole().toString()).isEqualTo(createUserRequest.getRole());
+        softly.assertThat(updateCustomerProfileResponse.getCustomer().getAccounts()).isEmpty();
 
         //проверка имени
         GetCustomerProfileResponse getCustomerProfileResponse = UserSteps.getProfile(
                 createUserRequest.getUsername(), createUserRequest.getPassword());
-//        GetCustomerProfileResponse getCustomerProfileResponse = new ValidatedCrudRequester<GetCustomerProfileResponse>(
-//                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-//                Endpoint.GET_CUSTOMER_PROFILE,
-//                ResponseSpecs.requestReturnsOK())
-//                .get();
 
         softly.assertThat(getCustomerProfileResponse.getId()).isEqualTo(createUserResponse.getId());
         softly.assertThat(getCustomerProfileResponse.getUsername()).isEqualTo(createUserRequest.getUsername());
         softly.assertThat(getCustomerProfileResponse.getPassword()).isNotEqualTo(createUserRequest.getPassword());
         softly.assertThat(getCustomerProfileResponse.getName()).isEqualTo(updatedName);
-        softly.assertThat(getCustomerProfileResponse.getRole().toString()).isEqualTo(UserRole.USER.toString());
+        softly.assertThat(getCustomerProfileResponse.getRole().toString()).isEqualTo(createUserRequest.getRole());
+        softly.assertThat(getCustomerProfileResponse.getAccounts()).isEmpty();
     }
 
     @ValueSource(strings =
@@ -66,11 +58,7 @@ public class UpdateNameTest extends BaseTest {
         CreateUserRequest createUserRequest = RandomModelGenerator.generate(CreateUserRequest.class);
 
         //создание пользователя
-        CreateUserResponse createUserResponse = AdminSteps.createUserGetResponse(createUserRequest);
-//        CreateUserResponse createUserResponse = new ValidatedCrudRequester<CreateUserResponse>(RequestSpecs.adminSpec(),
-//                Endpoint.ADMIN_USERS,
-//                ResponseSpecs.entityWasCreated())
-//                .post(createUserRequest);
+        CreateUserResponse createUserResponse = AdminSteps.createUserReturnResponse(createUserRequest);
 
         UpdateCustomerProfileRequest updateCustomerProfileRequest = UpdateCustomerProfileRequest.builder()
                 .name(name)
@@ -84,16 +72,12 @@ public class UpdateNameTest extends BaseTest {
         //проверка имени
         GetCustomerProfileResponse getCustomerProfileResponse = UserSteps.getProfile(
                 createUserRequest.getUsername(), createUserRequest.getPassword());
-//        GetCustomerProfileResponse getCustomerProfileResponse = new ValidatedCrudRequester<GetCustomerProfileResponse>(
-//                RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
-//                Endpoint.GET_CUSTOMER_PROFILE,
-//                ResponseSpecs.requestReturnsOK())
-//                .get();
 
         softly.assertThat(getCustomerProfileResponse.getId()).isEqualTo(createUserResponse.getId());
         softly.assertThat(getCustomerProfileResponse.getUsername()).isEqualTo(createUserRequest.getUsername());
         softly.assertThat(getCustomerProfileResponse.getPassword()).isNotEqualTo(createUserRequest.getPassword());
         softly.assertThat(getCustomerProfileResponse.getName()).isNull();
         softly.assertThat(getCustomerProfileResponse.getRole().toString()).isEqualTo(UserRole.USER.toString());
+        softly.assertThat(getCustomerProfileResponse.getAccounts()).isEmpty();
     }
 }
