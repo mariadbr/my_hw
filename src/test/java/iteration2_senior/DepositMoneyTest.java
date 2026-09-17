@@ -1,12 +1,11 @@
 package iteration2_senior;
 
 import generators.RandomData;
+import generators.RandomModelGenerator;
 import models.*;
 import models.comparison.ModelAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import requests.skelethon.Endpoint;
 import requests.skelethon.requesters.CrudRequester;
@@ -16,30 +15,16 @@ import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 public class DepositMoneyTest extends BaseTest {
 
-    public static Stream<Arguments> validUserAndAmountDataForDeposit() {
-        return Stream.of(
-                Arguments.of(RandomData.getUsername(), 0.01f),
-                Arguments.of(RandomData.getUsername(), 4999.99f));
-    }
-
-    @MethodSource("validUserAndAmountDataForDeposit")
+    @ValueSource(floats = {
+            //positive cases
+            0.01f, 4999.99f})
     @ParameterizedTest
-    public void checkBoundaryValuesDepositPositiveCases(String username, float amount) {
-        CreateUserRequest createUserRequest = CreateUserRequest.builder()
-                .username(username)
-                .password(RandomData.getPassword())
-                .role(UserRole.USER.toString())
-                .build();
-
+    public void checkBoundaryValuesDepositPositiveCases(float amount) {
         //создать юзера
-        new CrudRequester(RequestSpecs.adminSpec(),
-                Endpoint.ADMIN_USERS,
-                ResponseSpecs.entityWasCreated())
-                .post(createUserRequest);
+        CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать аккаунт
         CreateAccountResponse createAccountResponse = UserSteps.createAccount(createUserRequest.getUsername(), createUserRequest.getPassword());
@@ -193,7 +178,7 @@ public class DepositMoneyTest extends BaseTest {
                 createUserRequest.getUsername(), createUserRequest.getPassword());
 
         DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
-                .id(1000)
+                .id(RandomData.getRandomAccountId())
                 .balance(RandomData.getRandomPositiveFloat())
                 .build();
 

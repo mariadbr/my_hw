@@ -1,5 +1,6 @@
 package iteration2_senior;
 
+import generators.RandomData;
 import generators.RandomModelGenerator;
 import models.*;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,7 @@ public class UpdateNameTest extends BaseTest {
         //создание пользователя
         CreateUserResponse createUserResponse = AdminSteps.createUserReturnResponse(createUserRequest);
 
-        String updatedName = "Stas St";
+        String updatedName = RandomData.getRandomValidName();
 
         UpdateCustomerProfileRequest updateCustomerProfileRequest = UpdateCustomerProfileRequest.builder()
                 .name(updatedName)
@@ -64,6 +65,7 @@ public class UpdateNameTest extends BaseTest {
                 .name(name)
                 .build();
 
+        //изменение имени
         new CrudRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 Endpoint.UPDATE_CUSTOMER_PROFILE,
                 ResponseSpecs.requestReturnsBadRequestWithText(AlertMessage.NAME_MUST_CONTAIN_TWO_WORDS.getMessage()))
