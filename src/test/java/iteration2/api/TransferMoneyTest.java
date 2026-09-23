@@ -1,4 +1,4 @@
-package iteration2_senior;
+package iteration2.api;
 
 import generators.RandomData;
 import models.*;

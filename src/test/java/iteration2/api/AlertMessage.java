@@ -1,4 +1,4 @@
-package iteration2_senior;
+package iteration2.api;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

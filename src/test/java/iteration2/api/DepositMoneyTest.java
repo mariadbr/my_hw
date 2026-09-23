@@ -1,7 +1,6 @@
-package iteration2_senior;
+package iteration2.api;
 
 import generators.RandomData;
-import generators.RandomModelGenerator;
 import models.*;
 import models.comparison.ModelAssertions;
 import org.junit.jupiter.api.Test;
