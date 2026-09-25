@@ -35,6 +35,6 @@ public class RandomData {
         return RandomStringUtils.randomAlphabetic(1).toUpperCase() +
                 RandomStringUtils.randomAlphabetic(3).toLowerCase() +
                 " " + RandomStringUtils.randomAlphabetic(1).toUpperCase() +
-                RandomStringUtils.randomAlphabetic(6).toLowerCase();
+                RandomStringUtils.randomAlphabetic(4).toLowerCase();
     }
 }
