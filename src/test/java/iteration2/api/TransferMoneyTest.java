@@ -1,21 +1,21 @@
 package iteration2.api;
 
-import generators.RandomData;
-import models.*;
-import models.comparison.ModelAssertions;
+import api.generators.RandomData;
+import api.models.*;
+import api.models.comparison.ModelAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import requests.skelethon.Endpoint;
-import requests.skelethon.requesters.CrudRequester;
-import requests.steps.AdminSteps;
-import requests.steps.UserSteps;
-import specs.RequestSpecs;
-import specs.ResponseSpecs;
+import api.requests.skelethon.Endpoint;
+import api.requests.skelethon.requesters.CrudRequester;
+import api.requests.steps.AdminSteps;
+import api.requests.steps.UserSteps;
+import api.specs.RequestSpecs;
+import api.specs.ResponseSpecs;
 
 import java.util.List;
 
-import static models.UserBalanceDefaults.MAX_DEPOSIT_AMOUNT;
+import static api.models.UserBalanceDefaults.MAX_DEPOSIT_AMOUNT;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 
 public class TransferMoneyTest extends BaseTest {
