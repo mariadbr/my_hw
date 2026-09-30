@@ -2,7 +2,6 @@ package api.requests.steps;
 
 import api.models.*;
 import io.restassured.common.mapper.TypeRef;
-import models.*;
 import api.requests.skelethon.Endpoint;
 import api.requests.skelethon.requesters.ValidatedCrudRequester;
 import api.specs.RequestSpecs;

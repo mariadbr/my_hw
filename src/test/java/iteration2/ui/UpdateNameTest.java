@@ -1,129 +1,59 @@
 package iteration2.ui;
 
-import com.codeborne.selenide.Condition;
-import com.codeborne.selenide.Configuration;
-import com.codeborne.selenide.Selectors;
-import com.codeborne.selenide.Selenide;
 import api.generators.RandomData;
 import api.models.CreateUserRequest;
 import api.models.GetCustomerProfileResponse;
-import api.models.LoginUserRequest;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.openqa.selenium.Alert;
-import api.requests.skelethon.Endpoint;
-import api.requests.skelethon.requesters.CrudRequester;
 import api.requests.steps.AdminSteps;
-import api.specs.RequestSpecs;
-import api.specs.ResponseSpecs;
+import api.requests.steps.UserSteps;
+import com.codeborne.selenide.Condition;
+import com.codeborne.selenide.Selenide;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.Test;
+import ui.BankAlert;
+import ui.EditProfilePage;
+import ui.UserDashboard;
 
-import java.util.Map;
-
-import static com.codeborne.selenide.Selenide.$;
-import static com.codeborne.selenide.Selenide.switchTo;
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-public class UpdateNameTest {
-    @BeforeAll
-    public static void setupSelenoid() {
-        Configuration.remote = "http://localhost:4444/wd/hub";
-        Configuration.baseUrl = "http://192.168.0.124:3000";
-        Configuration.browser = "chrome";
-        Configuration.browserSize = "1920x1080";
-
-        Configuration.browserCapabilities.setCapability("selenoid:options",
-                Map.of("enableVNC", true, "enableLog", true)
-        );
-    }
+public class UpdateNameTest extends BaseUiTest {
 
     @Test
     public void userCanUpdateName() {
         CreateUserRequest user = AdminSteps.createUserReturnRequest();
 
-        String userAuthHeader = new CrudRequester(
-                RequestSpecs.unauthSpec(),
-                Endpoint.AUTH_LOGIN,
-                ResponseSpecs.requestReturnsOK())
-                .post(LoginUserRequest.builder().username(user.getUsername()).password(user.getPassword()).build())
-                .extract()
-                .header("authorization");
+        authAsUser(user);
 
-        Selenide.open("/");
-
-        Selenide.localStorage().setItem("authToken", userAuthHeader);
-
-        Selenide.open("/dashboard");
-
-        $("div.user-info").click();
         String newName = RandomData.getRandomValidName();
-        $(Selectors.byPlaceholder("Enter new name")).sendKeys(newName);
-        $(Selectors.byText("💾 Save Changes")).click();
 
-        Alert alert = switchTo().alert();
-
-        assertEquals("✅ Name updated successfully!", alert.getText());
-
-        alert.accept();
+        new UserDashboard().open().openEditProfilePage()
+                .getPage(EditProfilePage.class).open().editProfileName(newName)
+                .checkAlertMessageAndAccept(BankAlert.NAME_UPDATED_SUCCESSFULLY.getMessage());
 
         Selenide.refresh();
 
-        $(".user-name").shouldBe(Condition.visible).shouldHave(Condition.exactText(newName));
+        new UserDashboard().getUserName().shouldBe(Condition.visible).shouldHave(Condition.exactText(newName));
 
         //проверка апи
-        GetCustomerProfileResponse response = given()
-                .spec(RequestSpecs.authAsUser(user.getUsername(), user.getPassword()))
-                .get("http://localhost:4111/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .spec(ResponseSpecs.requestReturnsOK())
-                .extract().as(GetCustomerProfileResponse.class);
+        GetCustomerProfileResponse response = UserSteps.getProfile(user.getUsername(), user.getPassword());
 
-        assertEquals(newName, response.getName());
+        softly.assertThat(newName).isEqualTo(response.getName());
     }
 
     @Test
     public void userCannotUpdateNameWithInvalidValue() {
         CreateUserRequest user = AdminSteps.createUserReturnRequest();
 
-        String userAuthHeader = new CrudRequester(
-                RequestSpecs.unauthSpec(),
-                Endpoint.AUTH_LOGIN,
-                ResponseSpecs.requestReturnsOK())
-                .post(LoginUserRequest.builder().username(user.getUsername()).password(user.getPassword()).build())
-                .extract()
-                .header("authorization");
+        authAsUser(user);
 
-        Selenide.open("/");
-
-        Selenide.localStorage().setItem("authToken", userAuthHeader);
-
-        Selenide.open("/dashboard");
-
-        $("div.user-info").click();
-        $(Selectors.byPlaceholder("Enter new name")).sendKeys("aa");
-        $(Selectors.byText("💾 Save Changes")).click();
-
-        Alert alert = switchTo().alert();
-
-        assertEquals("Name must contain two words with letters only", alert.getText());
-
-        alert.accept();
+        new UserDashboard().open().openEditProfilePage()
+                .getPage(EditProfilePage.class).editProfileName(RandomStringUtils.randomAlphabetic(2))
+                .checkAlertMessageAndAccept(BankAlert.NAME_MUST_CONTAIN_TWO_WORDS_WITH_LETTERS_ONLY.getMessage());
 
         Selenide.refresh();
 
-        $(".user-name").shouldBe(Condition.visible).shouldBe(Condition.exactText("Noname"));
+        new UserDashboard().getUserName().shouldBe(Condition.visible).shouldBe(Condition.exactText("Noname"));
 
         //проверка апи
-        GetCustomerProfileResponse response = given()
-                .spec(RequestSpecs.authAsUser(user.getUsername(), user.getPassword()))
-                .get("http://localhost:4111/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .spec(ResponseSpecs.requestReturnsOK())
-                .extract().as(GetCustomerProfileResponse.class);
+        GetCustomerProfileResponse response = UserSteps.getProfile(user.getUsername(), user.getPassword());
 
-        assertThat(response.getName()).isNull();
+        softly.assertThat(response.getName()).isNull();
     }
 }

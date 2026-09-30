@@ -38,11 +38,11 @@ public class RequestSpecs {
                 .build();
     }
 
-    public static RequestSpecification authAsUser(String username, String password) {
+    public static String getAuthHeader(String username, String password) {
         String userAuthHeader;
 
         if (!authHeaders.containsKey(username)) {
-           userAuthHeader = new CrudRequester(
+            userAuthHeader = new CrudRequester(
                     RequestSpecs.unauthSpec(),
                     Endpoint.AUTH_LOGIN,
                     ResponseSpecs.requestReturnsOK())
@@ -50,13 +50,18 @@ public class RequestSpecs {
                     .extract()
                     .header("authorization");
 
-           authHeaders.put(username, userAuthHeader);
+            authHeaders.put(username, userAuthHeader);
         } else {
             userAuthHeader = authHeaders.get(username);
         }
 
+        return userAuthHeader;
+    }
+
+    public static RequestSpecification authAsUser(String username, String password) {
+
         return defaultRequestBuilder()
-                .addHeader("authorization", userAuthHeader)
+                .addHeader("authorization", getAuthHeader(username, password))
                 .build();
     }
 }
