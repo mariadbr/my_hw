@@ -6,6 +6,8 @@ import api.models.CreateUserRequest;
 import api.models.GetCustomerAccountsResponse;
 import api.requests.steps.AdminSteps;
 import api.requests.steps.UserSteps;
+import common.annotations.AccountSession;
+import common.annotations.UserSession;
 import org.junit.jupiter.api.Test;
 import ui.BankAlert;
 import ui.UserDashboard;
@@ -14,10 +16,13 @@ import ui.UserDepositPage;
 public class DepositMoneyTest extends BaseUiTest {
 
     @Test
+    @UserSession
+    @AccountSession
     public void userCanDepositValidAmount() {
         CreateUserRequest user = AdminSteps.createUserReturnRequest();
 
         CreateAccountResponse createAccountResponse = UserSteps.createAccount(user.getUsername(), user.getPassword());
+
 
         authAsUser(user);
 

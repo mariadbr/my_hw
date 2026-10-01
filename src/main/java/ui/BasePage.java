@@ -1,5 +1,7 @@
 package ui;
 
+import api.models.CreateUserRequest;
+import api.specs.RequestSpecs;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import org.openqa.selenium.Alert;
@@ -26,6 +28,16 @@ public abstract class BasePage<T extends BasePage> {
 
     public <T extends BasePage> T getPage(Class<T> pageClass) {
         return Selenide.page(pageClass);
+    }
+
+    public static void authAsUser(String username, String password) {
+        String userAuthHeader = RequestSpecs.getAuthHeader(username, password);
+        Selenide.open("/");
+        Selenide.localStorage().setItem("authToken", userAuthHeader);
+    }
+
+    public static void authAsUser(CreateUserRequest createUserRequest) {
+        authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword());
     }
 
 }
