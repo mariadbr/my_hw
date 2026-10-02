@@ -1,12 +1,11 @@
 package iteration2.ui;
 
 import api.generators.RandomData;
-import api.models.CreateUserRequest;
 import api.models.GetCustomerProfileResponse;
-import api.requests.steps.AdminSteps;
-import api.requests.steps.UserSteps;
 import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.Selenide;
+import common.annotations.UserSession;
+import common.storage.SessionStorage;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 import ui.BankAlert;
@@ -16,10 +15,11 @@ import ui.UserDashboard;
 public class UpdateNameTest extends BaseUiTest {
 
     @Test
+    @UserSession
     public void userCanUpdateName() {
-        CreateUserRequest user = AdminSteps.createUserReturnRequest();
-
-        authAsUser(user);
+//        CreateUserRequest user = AdminSteps.createUserReturnRequest();
+//
+//        authAsUser(user);
 
         String newName = RandomData.getRandomValidName();
 
@@ -32,16 +32,18 @@ public class UpdateNameTest extends BaseUiTest {
         new UserDashboard().getUserName().shouldBe(Condition.visible).shouldHave(Condition.exactText(newName));
 
         //проверка апи
-        GetCustomerProfileResponse response = UserSteps.getProfile(user.getUsername(), user.getPassword());
+        GetCustomerProfileResponse response = SessionStorage.getSession().getSteps().getProfile();
+        //UserSteps.getProfile(user.getUsername(), user.getPassword());
 
         softly.assertThat(newName).isEqualTo(response.getName());
     }
 
     @Test
+    @UserSession
     public void userCannotUpdateNameWithInvalidValue() {
-        CreateUserRequest user = AdminSteps.createUserReturnRequest();
-
-        authAsUser(user);
+//        CreateUserRequest user = AdminSteps.createUserReturnRequest();
+//
+//        authAsUser(user);
 
         new UserDashboard().open().openEditProfilePage()
                 .getPage(EditProfilePage.class).editProfileName(RandomStringUtils.randomAlphabetic(2))
@@ -52,7 +54,7 @@ public class UpdateNameTest extends BaseUiTest {
         new UserDashboard().getUserName().shouldBe(Condition.visible).shouldBe(Condition.exactText("Noname"));
 
         //проверка апи
-        GetCustomerProfileResponse response = UserSteps.getProfile(user.getUsername(), user.getPassword());
+        GetCustomerProfileResponse response = SessionStorage.getSession().getSteps().getProfile();
 
         softly.assertThat(response.getName()).isNull();
     }

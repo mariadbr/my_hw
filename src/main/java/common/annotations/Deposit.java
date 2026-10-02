@@ -7,6 +7,8 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AccountSession {
-    int value() default 1;
+public @interface Deposit {
+    int user() default 1;
+
+    float amount();
 }

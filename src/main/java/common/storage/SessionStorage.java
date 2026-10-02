@@ -1,7 +1,7 @@
 package common.storage;
 
+import api.models.CreateAccountResponse;
 import api.models.CreateUserRequest;
-import api.requests.steps.UserSteps;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -10,13 +10,13 @@ import java.util.List;
 public class SessionStorage {
     private static SessionStorage INSTANCE = new SessionStorage();
 
-    private LinkedHashMap<CreateUserRequest, UserSteps> userStepsMap = new LinkedHashMap<>();
+    private LinkedHashMap<CreateUserRequest, UserSessionData> usersMap = new LinkedHashMap<>();
 
     private SessionStorage() {}
 
     public static void addUsers(List<CreateUserRequest> users ) {
         for (CreateUserRequest user : users) {
-            INSTANCE.userStepsMap.put(user, new UserSteps()); //???
+            INSTANCE.usersMap.put(user, new UserSessionData(user));
         }
     }
 
@@ -26,22 +26,40 @@ public class SessionStorage {
      * @return Объект CreateUserRequest, соответствующий указанному порядковому номеру.
      */
     public static CreateUserRequest getUser(int number) {
-        return new ArrayList<>(INSTANCE.userStepsMap.keySet()).get(number - 1);
+        return new ArrayList<>(INSTANCE.usersMap.keySet()).get(number - 1);
     }
 
     public static CreateUserRequest getUser() {
         return getUser(1);
     }
 
-    public static UserSteps getSteps(int number) {
-        return new ArrayList<>(INSTANCE.userStepsMap.values()).get(number - 1);
+    public static UserSessionData getSession(int userNumber) { //переименовала с number
+        return new ArrayList<>(INSTANCE.usersMap.values()).get(userNumber - 1);
     }
 
-    public static UserSteps getSteps() {
-        return getSteps(1);
+    public static UserSessionData getSession() {
+        return getSession(1);
+    }
+
+    public static void addAccount(int userNumber, CreateAccountResponse account) {
+        getSession(userNumber).addAccount(account);
+    }
+
+    public static CreateAccountResponse getAccount(int userNumber, int accountNumber) {
+        return getSession(userNumber).getAccount(accountNumber);
+    }
+
+    public static CreateAccountResponse getAccount(int accountNumber) {
+        return getAccount(1, accountNumber);
     }
 
     public static void clear() {
-        INSTANCE.userStepsMap.clear();
+        INSTANCE.usersMap.clear();
     }
+
+    public static int getSessionCount() {
+        return INSTANCE.usersMap.size();
+    }
+
+    //создать еще getSteps? Вместо SessionStorage.getSession().getSteps()
 }
