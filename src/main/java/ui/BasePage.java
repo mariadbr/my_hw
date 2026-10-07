@@ -4,14 +4,17 @@ import api.models.CreateUserRequest;
 import api.specs.RequestSpecs;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import lombok.Getter;
 import org.openqa.selenium.Alert;
 
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.switchTo;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Getter
 public abstract class BasePage<T extends BasePage> {
     protected SelenideElement accountSelector = $(".account-selector");
+    protected SelenideElement userName = $("span.user-name");
 
     abstract String url();
 
@@ -26,7 +29,7 @@ public abstract class BasePage<T extends BasePage> {
         return (T) this;
     }
 
-    public <T extends BasePage> T getPage(Class<T> pageClass) {
+    public <P extends BasePage> P getPage(Class<P> pageClass) {
         return Selenide.page(pageClass);
     }
 
@@ -38,6 +41,11 @@ public abstract class BasePage<T extends BasePage> {
 
     public static void authAsUser(CreateUserRequest createUserRequest) {
         authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword());
+    }
+
+    public T refreshPage() {
+         Selenide.refresh();
+         return (T) this;
     }
 
 }

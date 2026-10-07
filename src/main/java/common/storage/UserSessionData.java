@@ -26,4 +26,8 @@ public class UserSessionData {
     public CreateAccountResponse getAccount(int number) {
         return accounts.get(number - 1);
     }
+
+    public CreateAccountResponse getAccount() {
+        return getAccount(1);
+    }
 }

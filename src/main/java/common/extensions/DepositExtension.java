@@ -16,12 +16,11 @@ public class DepositExtension implements BeforeEachCallback {
             int userNumber = annotation.user();
             float amount = annotation.amount();
 
-            CreateAccountResponse account = SessionStorage.getAccount(userNumber); //почему тут userNumber в параметре если в методе там accountNumber?
-            // и разве метод не должен быть .getAccount(userNumber, 1) ???
+            CreateAccountResponse account = SessionStorage.getSessionData(userNumber).getAccount();
 
             DepositMoneyRequest request = new DepositMoneyRequest(account.getId(), amount);
 
-            SessionStorage.getSession(userNumber).getSteps().depositMoney(request);
+            SessionStorage.getSessionData(userNumber).getSteps().depositMoney(request);
         }
     }
 }

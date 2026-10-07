@@ -8,10 +8,11 @@ import static com.codeborne.selenide.Selenide.$;
 
 @Getter
 public class UserDashboard extends BasePage<UserDashboard>{
+    public static final String USER_DEFAULT_NAME = "Noname";
+
     private SelenideElement depositMoneyButton = $(Selectors.byText("💰 Deposit Money"));
     private SelenideElement makeTransferButton = $(Selectors.byText("🔄 Make a Transfer"));
     private SelenideElement userInfo = $("div.user-info");
-    private SelenideElement userName = $("span.user-name");
 
     @Override
     String url() {

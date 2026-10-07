@@ -29,28 +29,28 @@ public class SessionStorage {
         return new ArrayList<>(INSTANCE.usersMap.keySet()).get(number - 1);
     }
 
-    public static CreateUserRequest getUser() {
+    public static CreateUserRequest  getUser() {
         return getUser(1);
     }
 
-    public static UserSessionData getSession(int userNumber) { //переименовала с number
+    public static UserSessionData getSessionData(int userNumber) {
         return new ArrayList<>(INSTANCE.usersMap.values()).get(userNumber - 1);
     }
 
-    public static UserSessionData getSession() {
-        return getSession(1);
+    public static UserSessionData getSessionData() {
+        return getSessionData(1);
     }
 
     public static void addAccount(int userNumber, CreateAccountResponse account) {
-        getSession(userNumber).addAccount(account);
+        getSessionData(userNumber).addAccount(account);
     }
 
     public static CreateAccountResponse getAccount(int userNumber, int accountNumber) {
-        return getSession(userNumber).getAccount(accountNumber);
+        return getSessionData(userNumber).getAccount(accountNumber);
     }
 
-    public static CreateAccountResponse getAccount(int accountNumber) {
-        return getAccount(1, accountNumber);
+    public static CreateAccountResponse getAccount() {
+        return getAccount(1, 1);
     }
 
     public static void clear() {
@@ -61,5 +61,4 @@ public class SessionStorage {
         return INSTANCE.usersMap.size();
     }
 
-    //создать еще getSteps? Вместо SessionStorage.getSession().getSteps()
 }
