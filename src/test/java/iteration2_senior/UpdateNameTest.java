@@ -23,9 +23,11 @@ public class UpdateNameTest extends BaseTest {
 
         String updatedName = RandomData.getRandomValidName();
 
-        UpdateCustomerProfileRequest updateCustomerProfileRequest = UpdateCustomerProfileRequest.builder()
-                .name(updatedName)
-                .build();
+//        UpdateCustomerProfileRequest updateCustomerProfileRequest = UpdateCustomerProfileRequest.builder()
+//                .name(updatedName)
+//                .build();
+        UpdateCustomerProfileRequest updateCustomerProfileRequest = RandomModelGenerator.generate(UpdateCustomerProfileRequest.class);
+        updateCustomerProfileRequest.setName(updatedName);
 
         //изменение имени
         UpdateCustomerProfileResponse updateCustomerProfileResponse = UserSteps.updateProfile(
@@ -61,9 +63,11 @@ public class UpdateNameTest extends BaseTest {
         //создание пользователя
         CreateUserResponse createUserResponse = AdminSteps.createUserReturnResponse(createUserRequest);
 
-        UpdateCustomerProfileRequest updateCustomerProfileRequest = UpdateCustomerProfileRequest.builder()
-                .name(name)
-                .build();
+//        UpdateCustomerProfileRequest updateCustomerProfileRequest = UpdateCustomerProfileRequest.builder()
+//                .name(name)
+//                .build();
+        UpdateCustomerProfileRequest updateCustomerProfileRequest = RandomModelGenerator.generate(UpdateCustomerProfileRequest.class);
+        updateCustomerProfileRequest.setName(name);
 
         //изменение имени
         new CrudRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),

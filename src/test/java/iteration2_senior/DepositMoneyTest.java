@@ -17,6 +17,7 @@ import specs.ResponseSpecs;
 import java.util.List;
 
 public class DepositMoneyTest extends BaseTest {
+    //вернуться к 3 строчке deposit request и посомтреть с генерацией
 
     @ValueSource(floats = {
             //positive cases
@@ -29,10 +30,13 @@ public class DepositMoneyTest extends BaseTest {
         //создать аккаунт
         CreateAccountResponse createAccountResponse = UserSteps.createAccount(createUserRequest.getUsername(), createUserRequest.getPassword());
 
-        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
-                .id(createAccountResponse.getId())
-                .balance(amount)
-                .build();
+//        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
+//                .id(createAccountResponse.getId())
+//                .balance(amount)
+//                .build();
+        DepositMoneyRequest depositMoneyRequest = RandomModelGenerator.generate(DepositMoneyRequest.class);
+        depositMoneyRequest.setId(createAccountResponse.getId());
+        depositMoneyRequest.setBalance(amount);
 
         //депозит денег
         DepositMoneyResponse depositMoneyResponse = UserSteps.depositMoney(
@@ -62,10 +66,13 @@ public class DepositMoneyTest extends BaseTest {
         //создать аккаунт
         CreateAccountResponse createAccountResponse = UserSteps.createAccount(createUserRequest.getUsername(), createUserRequest.getPassword());
 
-        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
-                .id(createAccountResponse.getId())
-                .balance(amount)
-                .build();
+//        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
+//                .id(createAccountResponse.getId())
+//                .balance(amount)
+//                .build();
+        DepositMoneyRequest depositMoneyRequest = RandomModelGenerator.generate(DepositMoneyRequest.class);
+        depositMoneyRequest.setId(createAccountResponse.getId());
+        depositMoneyRequest.setBalance(amount);
 
         //депозит денег
         new CrudRequester(
@@ -96,10 +103,14 @@ public class DepositMoneyTest extends BaseTest {
         //создать аккаунт
         CreateAccountResponse createAccountResponse = UserSteps.createAccount(createUserRequest.getUsername(), createUserRequest.getPassword());
 
-        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
-                .id(createAccountResponse.getId())
-                .balance(RandomData.getRandomNegativeFloat())
-                .build();
+//        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
+//                .id(createAccountResponse.getId())
+//                .balance(RandomData.getRandomNegativeFloat())
+//                .build();
+        DepositMoneyRequest depositMoneyRequest = RandomModelGenerator.generate(DepositMoneyRequest.class);
+        depositMoneyRequest.setId(createAccountResponse.getId());
+        depositMoneyRequest.setBalance(RandomData.getRandomNegativeFloat());
+
 
         //депозит денег
         new CrudRequester(
@@ -138,10 +149,13 @@ public class DepositMoneyTest extends BaseTest {
         CreateAccountResponse createSecondUserAccountResponse = UserSteps.createAccount(
                 createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword());
 
-        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
-                .id(createSecondUserAccountResponse.getId())
-                .balance(RandomData.getRandomPositiveFloat())
-                .build();
+//        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
+//                .id(createSecondUserAccountResponse.getId())
+//                .balance(RandomData.getRandomPositiveFloat())
+//                .build();
+        DepositMoneyRequest depositMoneyRequest = RandomModelGenerator.generate(DepositMoneyRequest.class);
+        depositMoneyRequest.setId(createSecondUserAccountResponse.getId());
+       // depositMoneyRequest.setBalance(RandomData.getRandomPositiveFloat());
 
         //депозит
         new CrudRequester(
@@ -177,10 +191,13 @@ public class DepositMoneyTest extends BaseTest {
         CreateAccountResponse createAccountResponse = UserSteps.createAccount(
                 createUserRequest.getUsername(), createUserRequest.getPassword());
 
-        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
-                .id(RandomData.getRandomAccountId())
-                .balance(RandomData.getRandomPositiveFloat())
-                .build();
+//        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
+//                .id(RandomData.getRandomAccountId())
+//                .balance(RandomData.getRandomPositiveFloat())
+//                .build();
+        DepositMoneyRequest depositMoneyRequest = RandomModelGenerator.generate(DepositMoneyRequest.class);
+        depositMoneyRequest.setId(RandomData.getRandomAccountId());
+        // depositMoneyRequest.setBalance(RandomData.getRandomPositiveFloat());
 
         //депозит денег
         new CrudRequester(

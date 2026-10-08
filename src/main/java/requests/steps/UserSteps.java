@@ -1,5 +1,6 @@
 package requests.steps;
 
+import generators.RandomModelGenerator;
 import io.restassured.common.mapper.TypeRef;
 import models.*;
 import requests.skelethon.Endpoint;
@@ -28,10 +29,13 @@ public class UserSteps {
     }
 
     public static DepositMoneyResponse depositMaxDepositAmount(long accountId, String username, String password) {
-        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
-                .id(accountId)
-                .balance(UserBalanceDefaults.MAX_DEPOSIT_AMOUNT.getAmount())
-                .build();
+        DepositMoneyRequest depositMoneyRequest = RandomModelGenerator.generate(DepositMoneyRequest.class);
+        depositMoneyRequest.setId(accountId);
+        depositMoneyRequest.setBalance(UserBalanceDefaults.MAX_DEPOSIT_AMOUNT.getAmount());
+//        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
+//                .id(accountId)
+//                .balance(UserBalanceDefaults.MAX_DEPOSIT_AMOUNT.getAmount())
+//                .build();
 
         return new ValidatedCrudRequester<DepositMoneyResponse>(
                 RequestSpecs.authAsUser(username, password),

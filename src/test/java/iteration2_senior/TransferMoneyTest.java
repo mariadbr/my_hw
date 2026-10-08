@@ -1,6 +1,7 @@
 package iteration2_senior;
 
 import generators.RandomData;
+import generators.RandomModelGenerator;
 import models.*;
 import models.comparison.ModelAssertions;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,8 @@ import static models.UserBalanceDefaults.MAX_DEPOSIT_AMOUNT;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 
 public class TransferMoneyTest extends BaseTest {
+    private static final float MARGIN_OF_ERROR = 0.001f;
+
     @Test
     public void userCanTransferValidAmountIntoSomeonesAccount() {
         //создать 1 юзера
@@ -44,11 +47,16 @@ public class TransferMoneyTest extends BaseTest {
         float randomTransferAmount = RandomData.getRandomPositiveFloat();
 
         //трансфер
-        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
-                .senderAccountId(createFirstUserAccountResponse.getId())
-                .receiverAccountId(createSecondUserAccountResponse.getId())
-                .amount(randomTransferAmount)
-                .build();
+//        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
+//                .senderAccountId(createFirstUserAccountResponse.getId())
+//                .receiverAccountId(createSecondUserAccountResponse.getId())
+//                .amount(randomTransferAmount)
+//                .build();
+        TransferMoneyRequest transferMoneyRequest = RandomModelGenerator.generate(TransferMoneyRequest.class);
+        transferMoneyRequest.setSenderAccountId(createFirstUserAccountResponse.getId());
+        transferMoneyRequest.setReceiverAccountId(createSecondUserAccountResponse.getId());
+        transferMoneyRequest.setAmount(randomTransferAmount);
+
 
         TransferMoneyResponse transferMoneyResponse = UserSteps.transferMoney(
                 createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword(), transferMoneyRequest);
@@ -67,7 +75,7 @@ public class TransferMoneyTest extends BaseTest {
                 .orElseThrow();
 
         softly.assertThat(firstUserGetCustomerAccountsResponse.getBalance()).isCloseTo(
-                MAX_DEPOSIT_AMOUNT.getAmount() - randomTransferAmount, within(0.001f));
+                MAX_DEPOSIT_AMOUNT.getAmount() - randomTransferAmount, within(MARGIN_OF_ERROR));
         softly.assertThat(firstUserGetCustomerAccountsResponse.getTransactions().size()).isEqualTo(2);
 
         //проверка счета 2 пользователя
@@ -126,17 +134,19 @@ public class TransferMoneyTest extends BaseTest {
                 createUserRequest.getUsername(), createUserRequest.getPassword());
 
         //депозит денег
-        for (int i = 0; i < 2; i++) {
-            UserSteps.depositMaxDepositAmount(
-                    createFirstAccountResponse.getId(), createUserRequest.getUsername(), createUserRequest.getPassword());
-        }
+        repeat(2, () -> UserSteps.depositMaxDepositAmount(
+                        createFirstAccountResponse.getId(), createUserRequest.getUsername(), createUserRequest.getPassword()));
 
         //трансфер
-        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
-                .senderAccountId(createFirstAccountResponse.getId())
-                .receiverAccountId(createSecondAccountResponse.getId())
-                .amount(amount)
-                .build();
+//        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
+//                .senderAccountId(createFirstAccountResponse.getId())
+//                .receiverAccountId(createSecondAccountResponse.getId())
+//                .amount(amount)
+//                .build();
+        TransferMoneyRequest transferMoneyRequest = RandomModelGenerator.generate(TransferMoneyRequest.class);
+        transferMoneyRequest.setSenderAccountId(createFirstAccountResponse.getId());
+        transferMoneyRequest.setReceiverAccountId(createSecondAccountResponse.getId());
+        transferMoneyRequest.setAmount(amount);
 
 
         TransferMoneyResponse transferMoneyResponse = UserSteps.transferMoney(
@@ -163,7 +173,7 @@ public class TransferMoneyTest extends BaseTest {
 
         softly.assertThat(firstGetCustomerAccountsResponse.getId()).isEqualTo(createFirstAccountResponse.getId());
         softly.assertThat(firstGetCustomerAccountsResponse.getBalance()).isCloseTo(
-                MAX_DEPOSIT_AMOUNT.getAmount() * 2 - amount, within(0.001f));
+                MAX_DEPOSIT_AMOUNT.getAmount() * 2 - amount, within(MARGIN_OF_ERROR));
         softly.assertThat(firstGetCustomerAccountsResponse.getTransactions()).isNotEmpty();
 
         softly.assertThat(secondGetCustomerAccountsResponse.getId()).isEqualTo(createSecondAccountResponse.getId());
@@ -188,11 +198,15 @@ public class TransferMoneyTest extends BaseTest {
         UserSteps.depositMaxDepositAmount(createFirstAccountResponse.getId(), createUserRequest.getUsername(), createUserRequest.getPassword());
 
         //трансфер
-        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
-                .senderAccountId(createFirstAccountResponse.getId())
-                .receiverAccountId(createSecondAccountResponse.getId())
-                .amount(RandomData.getRandomNegativeFloat())
-                .build();
+//        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
+//                .senderAccountId(createFirstAccountResponse.getId())
+//                .receiverAccountId(createSecondAccountResponse.getId())
+//                .amount(RandomData.getRandomNegativeFloat())
+//                .build();
+        TransferMoneyRequest transferMoneyRequest = RandomModelGenerator.generate(TransferMoneyRequest.class);
+        transferMoneyRequest.setSenderAccountId(createFirstAccountResponse.getId());
+        transferMoneyRequest.setReceiverAccountId(createSecondAccountResponse.getId());
+        transferMoneyRequest.setAmount(RandomData.getRandomNegativeFloat());
 
         new CrudRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
@@ -243,17 +257,19 @@ public class TransferMoneyTest extends BaseTest {
                 createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword());
 
         //депозит
-        for (int i = 0; i < 3; i++) {
-            UserSteps.depositMaxDepositAmount(
-                    createFirstUserAccountResponse.getId(), createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
-        }
+        repeat(3, () -> UserSteps.depositMaxDepositAmount(
+                createFirstUserAccountResponse.getId(), createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()));
 
         //трансфер
-        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
-                .senderAccountId(createFirstUserAccountResponse.getId())
-                .receiverAccountId(createSecondUserAccountResponse.getId())
-                .amount(amount)
-                .build();
+//        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
+//                .senderAccountId(createFirstUserAccountResponse.getId())
+//                .receiverAccountId(createSecondUserAccountResponse.getId())
+//                .amount(amount)
+//                .build();
+        TransferMoneyRequest transferMoneyRequest = RandomModelGenerator.generate(TransferMoneyRequest.class);
+        transferMoneyRequest.setSenderAccountId(createFirstUserAccountResponse.getId());
+        transferMoneyRequest.setReceiverAccountId(createSecondUserAccountResponse.getId());
+        transferMoneyRequest.setAmount(amount);
 
         new CrudRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
@@ -311,11 +327,15 @@ public class TransferMoneyTest extends BaseTest {
                 createFirstUserAccountResponse.getId(), createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
 
         //трансфер
-        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
-                .senderAccountId(createFirstUserAccountResponse.getId())
-                .receiverAccountId(createSecondUserAccountResponse.getId())
-                .amount(MAX_DEPOSIT_AMOUNT.getAmount() + RandomData.getRandomPositiveFloat())
-                .build();
+//        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
+//                .senderAccountId(createFirstUserAccountResponse.getId())
+//                .receiverAccountId(createSecondUserAccountResponse.getId())
+//                .amount(MAX_DEPOSIT_AMOUNT.getAmount() + RandomData.getRandomPositiveFloat())
+//                .build();
+        TransferMoneyRequest transferMoneyRequest = RandomModelGenerator.generate(TransferMoneyRequest.class);
+        transferMoneyRequest.setSenderAccountId(createFirstUserAccountResponse.getId());
+        transferMoneyRequest.setReceiverAccountId(createSecondUserAccountResponse.getId());
+        transferMoneyRequest.setAmount(MAX_DEPOSIT_AMOUNT.getAmount() + RandomData.getRandomPositiveFloat());
 
         new CrudRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),

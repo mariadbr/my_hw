@@ -41,8 +41,31 @@ public class RandomModelGenerator {
         return fields;
     }
 
+//    private static Object generateRandomValue(Field field) {
+//        Class<?> type = field.getType();
+//        if (type.equals(String.class)) {
+//            return UUID.randomUUID().toString().substring(0, 8);
+//        } else if (type.equals(Integer.class) || type.equals(int.class)) {
+//            return random.nextInt(1000);
+//        } else if (type.equals(Long.class) || type.equals(long.class)) {
+//            return random.nextLong();
+//        } else if (type.equals(Double.class) || type.equals(double.class)) {
+//            return random.nextDouble() * 100;
+//        } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
+//            return random.nextBoolean();
+//        } else if (type.equals(List.class)) {
+//            return generateRandomList(field);
+//        } else if (type.equals(Date.class)) {
+//            return new Date(System.currentTimeMillis() - random.nextInt(1000000000));
+//        } else {
+//            // Вложенный объект
+//            return generate(type);
+//        }
+//    }
+
     private static Object generateRandomValue(Field field) {
         Class<?> type = field.getType();
+
         if (type.equals(String.class)) {
             return UUID.randomUUID().toString().substring(0, 8);
         } else if (type.equals(Integer.class) || type.equals(int.class)) {
@@ -51,6 +74,8 @@ public class RandomModelGenerator {
             return random.nextLong();
         } else if (type.equals(Double.class) || type.equals(double.class)) {
             return random.nextDouble() * 100;
+        } else if (type.equals(Float.class) || type.equals(float.class)) {
+            return random.nextFloat() * 100;
         } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
             return random.nextBoolean();
         } else if (type.equals(List.class)) {
@@ -58,7 +83,6 @@ public class RandomModelGenerator {
         } else if (type.equals(Date.class)) {
             return new Date(System.currentTimeMillis() - random.nextInt(1000000000));
         } else {
-            // Вложенный объект
             return generate(type);
         }
     }
