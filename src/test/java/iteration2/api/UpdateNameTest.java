@@ -23,13 +23,12 @@ public class UpdateNameTest extends BaseTest {
 
         String updatedName = RandomData.getRandomValidName();
 
-        UpdateCustomerProfileRequest updateCustomerProfileRequest = UpdateCustomerProfileRequest.builder()
-                .name(updatedName)
-                .build();
+        UpdateCustomerProfileRequest updateCustomerProfileRequest = RandomModelGenerator.generate(UpdateCustomerProfileRequest.class);
+        updateCustomerProfileRequest.setName(updatedName);
 
         //изменение имени
-        UpdateCustomerProfileResponse updateCustomerProfileResponse = UserSteps.updateProfile(
-                createUserRequest.getUsername(), createUserRequest.getPassword(), updateCustomerProfileRequest);
+        UpdateCustomerProfileResponse updateCustomerProfileResponse = new UserSteps(createUserRequest.getUsername(), createUserRequest.getPassword())
+                .updateProfile(updateCustomerProfileRequest);
 
         softly.assertThat(updateCustomerProfileResponse.getMessage()).isEqualTo(AlertMessage.PROFILE_UPDATED_SUCCESSFULLY.getMessage());
         softly.assertThat(updateCustomerProfileResponse.getCustomer().getId()).isEqualTo(createUserResponse.getId());
@@ -40,8 +39,8 @@ public class UpdateNameTest extends BaseTest {
         softly.assertThat(updateCustomerProfileResponse.getCustomer().getAccounts()).isEmpty();
 
         //проверка имени
-        GetCustomerProfileResponse getCustomerProfileResponse = UserSteps.getProfile(
-                createUserRequest.getUsername(), createUserRequest.getPassword());
+        GetCustomerProfileResponse getCustomerProfileResponse = new UserSteps(
+                createUserRequest.getUsername(), createUserRequest.getPassword()).getProfile();
 
         softly.assertThat(getCustomerProfileResponse.getId()).isEqualTo(createUserResponse.getId());
         softly.assertThat(getCustomerProfileResponse.getUsername()).isEqualTo(createUserRequest.getUsername());
@@ -61,9 +60,8 @@ public class UpdateNameTest extends BaseTest {
         //создание пользователя
         CreateUserResponse createUserResponse = AdminSteps.createUserReturnResponse(createUserRequest);
 
-        UpdateCustomerProfileRequest updateCustomerProfileRequest = UpdateCustomerProfileRequest.builder()
-                .name(name)
-                .build();
+        UpdateCustomerProfileRequest updateCustomerProfileRequest = RandomModelGenerator.generate(UpdateCustomerProfileRequest.class);
+        updateCustomerProfileRequest.setName(name);
 
         //изменение имени
         new CrudRequester(RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
@@ -72,8 +70,8 @@ public class UpdateNameTest extends BaseTest {
                 .put(updateCustomerProfileRequest);
 
         //проверка имени
-        GetCustomerProfileResponse getCustomerProfileResponse = UserSteps.getProfile(
-                createUserRequest.getUsername(), createUserRequest.getPassword());
+        GetCustomerProfileResponse getCustomerProfileResponse = new UserSteps(createUserRequest.getUsername(), createUserRequest.getPassword())
+                .getProfile();
 
         softly.assertThat(getCustomerProfileResponse.getId()).isEqualTo(createUserResponse.getId());
         softly.assertThat(getCustomerProfileResponse.getUsername()).isEqualTo(createUserRequest.getUsername());

@@ -15,7 +15,6 @@ import ui.UserTransferPage;
 import static org.assertj.core.api.Assertions.within;
 
 public class TransferMoneyTest extends BaseUiTest {
-    private static final float MARGIN_OF_ERROR = 0.001f;
     private static final float DEPOSIT_AMOUNT = 5000f;
 
     @Test

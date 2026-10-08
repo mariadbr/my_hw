@@ -52,7 +52,11 @@ public enum Endpoint {
             "/accounts/{accountId}/transactions",
             BaseModel.class,
             GetTransactionResponse.class
-    );
+    ),
+    ADMIN_USERS_ID(
+            "/admin/users/{id}",
+            BaseModel.class,
+            BaseModel.class);
 
     private final String url;
     private final Class<? extends BaseModel> requestModel;

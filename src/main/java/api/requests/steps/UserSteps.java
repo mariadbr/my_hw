@@ -1,17 +1,24 @@
 package api.requests.steps;
 
+import api.generators.RandomModelGenerator;
 import api.models.*;
 import io.restassured.common.mapper.TypeRef;
 import api.requests.skelethon.Endpoint;
 import api.requests.skelethon.requesters.ValidatedCrudRequester;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+import lombok.AllArgsConstructor;
 
 
 import java.util.List;
 
+
+@AllArgsConstructor
 public class UserSteps {
-    public static CreateAccountResponse createAccount(String username, String password) {
+    private String username;
+    private String password;
+
+    public CreateAccountResponse createAccount() {
         return new ValidatedCrudRequester<CreateAccountResponse>(
                 RequestSpecs.authAsUser(username, password),
                 Endpoint.ACCOUNTS,
@@ -19,7 +26,7 @@ public class UserSteps {
                 .post();
     }
 
-    public static DepositMoneyResponse depositMoney(String username, String password, DepositMoneyRequest depositMoneyRequest) {
+    public DepositMoneyResponse depositMoney(DepositMoneyRequest depositMoneyRequest) {
         return new ValidatedCrudRequester<DepositMoneyResponse>(
                 RequestSpecs.authAsUser(username, password),
                 Endpoint.ACCOUNTS_DEPOSIT,
@@ -27,11 +34,10 @@ public class UserSteps {
                 .post(depositMoneyRequest);
     }
 
-    public static DepositMoneyResponse depositMaxDepositAmount(long accountId, String username, String password) {
-        DepositMoneyRequest depositMoneyRequest = DepositMoneyRequest.builder()
-                .id(accountId)
-                .balance(UserBalanceDefaults.MAX_DEPOSIT_AMOUNT.getAmount())
-                .build();
+    public DepositMoneyResponse depositMaxDepositAmount(long accountId) {
+        DepositMoneyRequest depositMoneyRequest = RandomModelGenerator.generate(DepositMoneyRequest.class);
+        depositMoneyRequest.setId(accountId);
+        depositMoneyRequest.setBalance(UserBalanceDefaults.MAX_DEPOSIT_AMOUNT.getAmount());
 
         return new ValidatedCrudRequester<DepositMoneyResponse>(
                 RequestSpecs.authAsUser(username, password),
@@ -40,7 +46,7 @@ public class UserSteps {
                 .post(depositMoneyRequest);
     }
 
-    public static TransferMoneyResponse transferMoney(String username, String password, TransferMoneyRequest transferMoneyRequest) {
+    public TransferMoneyResponse transferMoney(TransferMoneyRequest transferMoneyRequest) {
         return new ValidatedCrudRequester<TransferMoneyResponse>(
                 RequestSpecs.authAsUser(username, password),
                 Endpoint.ACCOUNTS_TRANSFER,
@@ -48,7 +54,7 @@ public class UserSteps {
                 .post(transferMoneyRequest);
     }
 
-    public static UpdateCustomerProfileResponse updateProfile(String username, String password, UpdateCustomerProfileRequest request) {
+    public UpdateCustomerProfileResponse updateProfile(UpdateCustomerProfileRequest request) {
         return new ValidatedCrudRequester<UpdateCustomerProfileResponse>(
                 RequestSpecs.authAsUser(username, password),
                 Endpoint.UPDATE_CUSTOMER_PROFILE,
@@ -56,7 +62,7 @@ public class UserSteps {
                 .put(request);
     }
 
-    public static GetCustomerProfileResponse getProfile(String username, String password) {
+    public GetCustomerProfileResponse getProfile() {
         return new ValidatedCrudRequester<GetCustomerProfileResponse>(
                 RequestSpecs.authAsUser(username, password),
                 Endpoint.GET_CUSTOMER_PROFILE,
@@ -64,7 +70,7 @@ public class UserSteps {
                 .get();
     }
 
-    public static List<GetCustomerAccountsResponse> getAccounts(String username, String password) {
+    public List<GetCustomerAccountsResponse> getAccounts() {
         return new ValidatedCrudRequester<GetCustomerAccountsResponse>(
                 RequestSpecs.authAsUser(username, password),
                 Endpoint.CUSTOMER_ACCOUNTS,
@@ -72,7 +78,7 @@ public class UserSteps {
                 .getList(new TypeRef<List<GetCustomerAccountsResponse>>() {});
     }
 
-    public static List<GetTransactionResponse> getTransactions(String username, String password, long id) {
+    public List<GetTransactionResponse> getTransactions(long id) {
         return new ValidatedCrudRequester<GetTransactionResponse>(
                 RequestSpecs.authAsUser(username, password),
                 Endpoint.ACCOUNT_TRANSACTIONS,

@@ -1,5 +1,7 @@
 package api.requests.skelethon.requesters;
 
+import api.specs.RequestSpecs;
+import api.specs.ResponseSpecs;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
@@ -77,7 +79,13 @@ public class CrudRequester extends HttpRequest implements CrudEndpointInterface,
     }
 
     @Override
-    public Object delete(long id) {
-        return null;
+    public ValidatableResponse delete(long id) {
+        return given()
+                .spec(RequestSpecs.adminSpec())
+                .pathParam("id", id)
+                .delete("/admin/users/{id}")
+                .then()
+                .assertThat()
+                .spec(ResponseSpecs.requestReturnsOK());
     }
 }

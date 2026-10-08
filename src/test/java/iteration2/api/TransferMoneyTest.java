@@ -1,6 +1,7 @@
 package iteration2.api;
 
 import api.generators.RandomData;
+import api.generators.RandomModelGenerator;
 import api.models.*;
 import api.models.comparison.ModelAssertions;
 import org.junit.jupiter.api.Test;
@@ -19,46 +20,43 @@ import static api.models.UserBalanceDefaults.MAX_DEPOSIT_AMOUNT;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 
 public class TransferMoneyTest extends BaseTest {
+
     @Test
     public void userCanTransferValidAmountIntoSomeonesAccount() {
         //создать 1 юзера
         CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать аккаунт 1 юзера
-        CreateAccountResponse createFirstUserAccountResponse = UserSteps.createAccount(
-                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
+        CreateAccountResponse createFirstUserAccountResponse = new UserSteps(
+                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()).createAccount();
 
         //создать 2 юзера
         CreateUserRequest createSecondUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать аккаунт 2 юзера
-        CreateAccountResponse createSecondUserAccountResponse = UserSteps.createAccount(
-                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword());
+        CreateAccountResponse createSecondUserAccountResponse = new UserSteps(
+                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()).createAccount();
 
         //депозит
-        UserSteps.depositMaxDepositAmount(
-                createFirstUserAccountResponse.getId(),
-                createFirstUserRequest.getUsername(),
-                createFirstUserRequest.getPassword());
-
-        float randomTransferAmount = RandomData.getRandomPositiveFloat();
+        new UserSteps(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword())
+                .depositMaxDepositAmount(createFirstUserAccountResponse.getId());
 
         //трансфер
-        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
-                .senderAccountId(createFirstUserAccountResponse.getId())
-                .receiverAccountId(createSecondUserAccountResponse.getId())
-                .amount(randomTransferAmount)
-                .build();
+        TransferMoneyRequest transferMoneyRequest = RandomModelGenerator.generate(TransferMoneyRequest.class);
+        transferMoneyRequest.setSenderAccountId(createFirstUserAccountResponse.getId());
+        transferMoneyRequest.setReceiverAccountId(createSecondUserAccountResponse.getId());
 
-        TransferMoneyResponse transferMoneyResponse = UserSteps.transferMoney(
-                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword(), transferMoneyRequest);
+        float transferAmount = transferMoneyRequest.getAmount();
+
+        TransferMoneyResponse transferMoneyResponse = new UserSteps(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword())
+                .transferMoney(transferMoneyRequest);
 
         ModelAssertions.assertThatModels(transferMoneyRequest, transferMoneyResponse).match();
         softly.assertThat(transferMoneyResponse.getMessage()).isEqualTo(AlertMessage.TRANSFER_SUCCESSFUL.getMessage());
 
         //проверка счета 1 пользователя
-        List<GetCustomerAccountsResponse> firstUserGetCustomerAccountsResponseList = UserSteps.getAccounts(
-                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
+        List<GetCustomerAccountsResponse> firstUserGetCustomerAccountsResponseList = new UserSteps(
+                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()).getAccounts();
 
         GetCustomerAccountsResponse firstUserGetCustomerAccountsResponse = firstUserGetCustomerAccountsResponseList.stream()
                 .filter(getCustomerAccountResponse ->
@@ -67,12 +65,12 @@ public class TransferMoneyTest extends BaseTest {
                 .orElseThrow();
 
         softly.assertThat(firstUserGetCustomerAccountsResponse.getBalance()).isCloseTo(
-                MAX_DEPOSIT_AMOUNT.getAmount() - randomTransferAmount, within(0.001f));
+                MAX_DEPOSIT_AMOUNT.getAmount() - transferAmount, within(MARGIN_OF_ERROR));
         softly.assertThat(firstUserGetCustomerAccountsResponse.getTransactions().size()).isEqualTo(2);
 
         //проверка счета 2 пользователя
-        List<GetCustomerAccountsResponse> secondUserGetCustomerAccountsResponseList = UserSteps.getAccounts(
-                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword());
+        List<GetCustomerAccountsResponse> secondUserGetCustomerAccountsResponseList = new UserSteps(
+                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()).getAccounts();
 
         GetCustomerAccountsResponse secondUserGetCustomerAccountsResponse = secondUserGetCustomerAccountsResponseList.stream()
                 .filter(getCustomerAccountResponse ->
@@ -80,20 +78,21 @@ public class TransferMoneyTest extends BaseTest {
                 .findFirst()
                 .orElseThrow();
 
-        softly.assertThat(secondUserGetCustomerAccountsResponse.getBalance()).isEqualTo(randomTransferAmount);
+        softly.assertThat(secondUserGetCustomerAccountsResponse.getBalance()).isEqualTo(transferAmount);
         softly.assertThat(secondUserGetCustomerAccountsResponse.getTransactions().size()).isEqualTo(1);
 
         //проверка транзакции
-        List<GetTransactionResponse> firstUserGetTransactionResponseList = UserSteps.getTransactions(
-                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword(), createFirstUserAccountResponse.getId());
+        List<GetTransactionResponse> firstUserGetTransactionResponseList = new UserSteps(
+                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()).getTransactions(createFirstUserAccountResponse.getId());
 
         GetTransactionResponse firstUserGetTransactionResponse = firstUserGetTransactionResponseList.stream()
                 .filter(transactionResponse -> transactionResponse.getType() == TransactionType.TRANSFER_OUT)
                 .findFirst()
                 .orElseThrow();
 
-        List<GetTransactionResponse> secondUserGetTransactionResponseList = UserSteps.getTransactions(
-                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword(), createSecondUserAccountResponse.getId());
+        List<GetTransactionResponse> secondUserGetTransactionResponseList = new UserSteps(
+                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword())
+                .getTransactions(createSecondUserAccountResponse.getId());
 
         GetTransactionResponse secondUserGetTransactionResponse = secondUserGetTransactionResponseList.stream()
                 .filter(transactionResponse -> transactionResponse.getType() == TransactionType.TRANSFER_IN)
@@ -101,11 +100,11 @@ public class TransferMoneyTest extends BaseTest {
                 .orElseThrow();
 
         softly.assertThat(firstUserGetTransactionResponse.getId()).isNotNull();
-        softly.assertThat(firstUserGetTransactionResponse.getAmount()).isEqualTo(randomTransferAmount);
+        softly.assertThat(firstUserGetTransactionResponse.getAmount()).isEqualTo(transferAmount);
         softly.assertThat(firstUserGetTransactionResponse.getRelatedAccountId()).isEqualTo(createSecondUserAccountResponse.getId());
 
         softly.assertThat(secondUserGetTransactionResponse.getId()).isNotNull();
-        softly.assertThat(secondUserGetTransactionResponse.getAmount()).isEqualTo(randomTransferAmount);
+        softly.assertThat(secondUserGetTransactionResponse.getAmount()).isEqualTo(transferAmount);
         softly.assertThat(secondUserGetTransactionResponse.getRelatedAccountId()).isEqualTo(createFirstUserAccountResponse.getId());
     }
 
@@ -118,36 +117,33 @@ public class TransferMoneyTest extends BaseTest {
         CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать 1 аккаунт
-        CreateAccountResponse createFirstAccountResponse = UserSteps.createAccount(
-                createUserRequest.getUsername(), createUserRequest.getPassword());
+        CreateAccountResponse createFirstAccountResponse = new UserSteps(createUserRequest.getUsername(), createUserRequest.getPassword())
+                .createAccount();
 
         //создать 2 аккаунт
-        CreateAccountResponse createSecondAccountResponse = UserSteps.createAccount(
-                createUserRequest.getUsername(), createUserRequest.getPassword());
+        CreateAccountResponse createSecondAccountResponse = new UserSteps(createUserRequest.getUsername(), createUserRequest.getPassword())
+                .createAccount();
 
         //депозит денег
-        for (int i = 0; i < 2; i++) {
-            UserSteps.depositMaxDepositAmount(
-                    createFirstAccountResponse.getId(), createUserRequest.getUsername(), createUserRequest.getPassword());
-        }
+        repeat(2, () -> new UserSteps(createUserRequest.getUsername(), createUserRequest.getPassword())
+                .depositMaxDepositAmount(createFirstAccountResponse.getId()));
 
         //трансфер
-        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
-                .senderAccountId(createFirstAccountResponse.getId())
-                .receiverAccountId(createSecondAccountResponse.getId())
-                .amount(amount)
-                .build();
+        TransferMoneyRequest transferMoneyRequest = RandomModelGenerator.generate(TransferMoneyRequest.class);
+        transferMoneyRequest.setSenderAccountId(createFirstAccountResponse.getId());
+        transferMoneyRequest.setReceiverAccountId(createSecondAccountResponse.getId());
+        transferMoneyRequest.setAmount(amount);
 
 
-        TransferMoneyResponse transferMoneyResponse = UserSteps.transferMoney(
-                createUserRequest.getUsername(), createUserRequest.getPassword(), transferMoneyRequest);
+        TransferMoneyResponse transferMoneyResponse = new UserSteps(
+                createUserRequest.getUsername(), createUserRequest.getPassword()).transferMoney(transferMoneyRequest);
 
         ModelAssertions.assertThatModels(transferMoneyRequest, transferMoneyResponse).match();
         softly.assertThat(transferMoneyResponse.getMessage()).isEqualTo(AlertMessage.TRANSFER_SUCCESSFUL.getMessage());
 
         //проверка 1 и 2 счета
-        List<GetCustomerAccountsResponse> getCustomerAccountsResponseList = UserSteps.getAccounts(
-                createUserRequest.getUsername(), createUserRequest.getPassword());
+        List<GetCustomerAccountsResponse> getCustomerAccountsResponseList = new UserSteps(
+                createUserRequest.getUsername(), createUserRequest.getPassword()).getAccounts();
 
         GetCustomerAccountsResponse firstGetCustomerAccountsResponse = getCustomerAccountsResponseList.stream()
                 .filter(getCustomerAccountResponse ->
@@ -163,7 +159,7 @@ public class TransferMoneyTest extends BaseTest {
 
         softly.assertThat(firstGetCustomerAccountsResponse.getId()).isEqualTo(createFirstAccountResponse.getId());
         softly.assertThat(firstGetCustomerAccountsResponse.getBalance()).isCloseTo(
-                MAX_DEPOSIT_AMOUNT.getAmount() * 2 - amount, within(0.001f));
+                MAX_DEPOSIT_AMOUNT.getAmount() * 2 - amount, within(MARGIN_OF_ERROR));
         softly.assertThat(firstGetCustomerAccountsResponse.getTransactions()).isNotEmpty();
 
         softly.assertThat(secondGetCustomerAccountsResponse.getId()).isEqualTo(createSecondAccountResponse.getId());
@@ -177,22 +173,22 @@ public class TransferMoneyTest extends BaseTest {
         CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать 1 аккаунт
-        CreateAccountResponse createFirstAccountResponse = UserSteps.createAccount(
-                createUserRequest.getUsername(), createUserRequest.getPassword());
+        CreateAccountResponse createFirstAccountResponse = new UserSteps(
+                createUserRequest.getUsername(), createUserRequest.getPassword()).createAccount();
 
         //создать 2 аккаунт
-        CreateAccountResponse createSecondAccountResponse = UserSteps.createAccount(
-                createUserRequest.getUsername(), createUserRequest.getPassword());
+        CreateAccountResponse createSecondAccountResponse = new UserSteps(
+                createUserRequest.getUsername(), createUserRequest.getPassword()).createAccount();
 
-       //депозит денег
-        UserSteps.depositMaxDepositAmount(createFirstAccountResponse.getId(), createUserRequest.getUsername(), createUserRequest.getPassword());
+        //депозит денег
+        new UserSteps(createUserRequest.getUsername(), createUserRequest.getPassword())
+                .depositMaxDepositAmount(createFirstAccountResponse.getId());
 
         //трансфер
-        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
-                .senderAccountId(createFirstAccountResponse.getId())
-                .receiverAccountId(createSecondAccountResponse.getId())
-                .amount(RandomData.getRandomNegativeFloat())
-                .build();
+        TransferMoneyRequest transferMoneyRequest = RandomModelGenerator.generate(TransferMoneyRequest.class);
+        transferMoneyRequest.setSenderAccountId(createFirstAccountResponse.getId());
+        transferMoneyRequest.setReceiverAccountId(createSecondAccountResponse.getId());
+        transferMoneyRequest.setAmount(RandomData.getRandomNegativeFloat());
 
         new CrudRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
@@ -201,8 +197,8 @@ public class TransferMoneyTest extends BaseTest {
                 .post(transferMoneyRequest);
 
         //проверка 1 и 2 счета
-        List<GetCustomerAccountsResponse> getCustomerAccountsResponseList = UserSteps.getAccounts(
-                createUserRequest.getUsername(), createUserRequest.getPassword());
+        List<GetCustomerAccountsResponse> getCustomerAccountsResponseList = new UserSteps(createUserRequest.getUsername(), createUserRequest.getPassword())
+                .getAccounts();
 
         GetCustomerAccountsResponse firstGetCustomerAccountsResponse = getCustomerAccountsResponseList.stream()
                 .filter(getCustomerAccountResponse ->
@@ -232,28 +228,25 @@ public class TransferMoneyTest extends BaseTest {
         CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать аккаунт 1 юзера
-        CreateAccountResponse createFirstUserAccountResponse = UserSteps.createAccount(
-                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
+        CreateAccountResponse createFirstUserAccountResponse = new UserSteps(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword())
+                .createAccount();
 
         //создать 2 юзера
         CreateUserRequest createSecondUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать аккаунт 2 юзера
-        CreateAccountResponse createSecondUserAccountResponse = UserSteps.createAccount(
-                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword());
+        CreateAccountResponse createSecondUserAccountResponse = new UserSteps(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword())
+                .createAccount();
 
         //депозит
-        for (int i = 0; i < 3; i++) {
-            UserSteps.depositMaxDepositAmount(
-                    createFirstUserAccountResponse.getId(), createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
-        }
+        repeat(3, () -> new UserSteps(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword())
+                .depositMaxDepositAmount(createFirstUserAccountResponse.getId()));
 
         //трансфер
-        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
-                .senderAccountId(createFirstUserAccountResponse.getId())
-                .receiverAccountId(createSecondUserAccountResponse.getId())
-                .amount(amount)
-                .build();
+        TransferMoneyRequest transferMoneyRequest = RandomModelGenerator.generate(TransferMoneyRequest.class);
+        transferMoneyRequest.setSenderAccountId(createFirstUserAccountResponse.getId());
+        transferMoneyRequest.setReceiverAccountId(createSecondUserAccountResponse.getId());
+        transferMoneyRequest.setAmount(amount);
 
         new CrudRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
@@ -262,8 +255,8 @@ public class TransferMoneyTest extends BaseTest {
                 .post(transferMoneyRequest);
 
         //проверка счета 1 пользователя
-        List<GetCustomerAccountsResponse> firstUserGetCustomerAccountsResponseList = UserSteps.getAccounts(
-                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
+        List<GetCustomerAccountsResponse> firstUserGetCustomerAccountsResponseList = new UserSteps(
+                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()).getAccounts();
 
         GetCustomerAccountsResponse firstUserGetCustomerAccountsResponse = firstUserGetCustomerAccountsResponseList.stream()
                 .filter(getCustomerAccountResponse ->
@@ -272,8 +265,8 @@ public class TransferMoneyTest extends BaseTest {
                 .orElseThrow();
 
         //проверка счета 2 пользователя
-        List<GetCustomerAccountsResponse> secondUserGetCustomerAccountsResponseList = UserSteps.getAccounts(
-                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword());
+        List<GetCustomerAccountsResponse> secondUserGetCustomerAccountsResponseList = new UserSteps(
+                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()).getAccounts();
 
         GetCustomerAccountsResponse secondUserGetCustomerAccountsResponse = secondUserGetCustomerAccountsResponseList.stream()
                 .filter(getCustomerAccountResponse ->
@@ -292,30 +285,29 @@ public class TransferMoneyTest extends BaseTest {
 
     @Test
     public void userCannotTransferAmountBiggerThanAvailableIntoSomeonesAccount() {
-       //создать 1 юзера
+        //создать 1 юзера
         CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать аккаунт 1 юзера
-        CreateAccountResponse createFirstUserAccountResponse = UserSteps.createAccount(
-                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
+        CreateAccountResponse createFirstUserAccountResponse = new UserSteps(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword())
+                .createAccount();
 
         //создать 2 юзера
         CreateUserRequest createSecondUserRequest = AdminSteps.createUserReturnRequest();
 
         //создать аккаунт 2 юзера
-        CreateAccountResponse createSecondUserAccountResponse = UserSteps.createAccount(
-                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword());
+        CreateAccountResponse createSecondUserAccountResponse = new UserSteps(createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword())
+                .createAccount();
 
         //депозит
-        UserSteps.depositMaxDepositAmount(
-                createFirstUserAccountResponse.getId(), createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
+        new UserSteps(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword())
+                .depositMaxDepositAmount(createFirstUserAccountResponse.getId());
 
         //трансфер
-        TransferMoneyRequest transferMoneyRequest = TransferMoneyRequest.builder()
-                .senderAccountId(createFirstUserAccountResponse.getId())
-                .receiverAccountId(createSecondUserAccountResponse.getId())
-                .amount(MAX_DEPOSIT_AMOUNT.getAmount() + RandomData.getRandomPositiveFloat())
-                .build();
+        TransferMoneyRequest transferMoneyRequest = RandomModelGenerator.generate(TransferMoneyRequest.class);
+        transferMoneyRequest.setSenderAccountId(createFirstUserAccountResponse.getId());
+        transferMoneyRequest.setReceiverAccountId(createSecondUserAccountResponse.getId());
+        transferMoneyRequest.setAmount(MAX_DEPOSIT_AMOUNT.getAmount() + RandomData.getRandomPositiveFloat());
 
         new CrudRequester(
                 RequestSpecs.authAsUser(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()),
@@ -324,8 +316,8 @@ public class TransferMoneyTest extends BaseTest {
                 .post(transferMoneyRequest);
 
         //проверка счета 1 пользователя
-        List<GetCustomerAccountsResponse> firstUserGetCustomerAccountsResponseList = UserSteps.getAccounts(
-                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword());
+        List<GetCustomerAccountsResponse> firstUserGetCustomerAccountsResponseList = new UserSteps(
+                createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword()).getAccounts();
 
         GetCustomerAccountsResponse firstUserGetCustomerAccountsResponse = firstUserGetCustomerAccountsResponseList.stream()
                 .filter(getCustomerAccountResponse ->
@@ -334,8 +326,8 @@ public class TransferMoneyTest extends BaseTest {
                 .orElseThrow();
 
         //проверка счета 2 пользователя
-        List<GetCustomerAccountsResponse> secondUserGetCustomerAccountsResponseList = UserSteps.getAccounts(
-                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword());
+        List<GetCustomerAccountsResponse> secondUserGetCustomerAccountsResponseList = new UserSteps(
+                createSecondUserRequest.getUsername(), createSecondUserRequest.getPassword()).getAccounts();
 
         GetCustomerAccountsResponse secondUserGetCustomerAccountsResponse = secondUserGetCustomerAccountsResponseList.stream()
                 .filter(getCustomerAccountResponse ->
