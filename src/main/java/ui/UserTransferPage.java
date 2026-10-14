@@ -1,7 +1,10 @@
 package ui;
 
+import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.SelenideElement;
+
+import java.time.Duration;
 
 import static com.codeborne.selenide.Selenide.$;
 
@@ -17,10 +20,14 @@ public class UserTransferPage extends BasePage<UserTransferPage>{
     }
 
     public UserTransferPage makeTransfer(String senderAccount, String recipientAccount, String amount) {
+        accountSelector.$$("option")
+                .findBy(Condition.text(senderAccount))
+                .shouldBe(Condition.exist, Duration.ofSeconds(6));
+
         accountSelector.selectOptionContainingText(senderAccount);
+
         enterRecipientAccountInput.sendKeys(recipientAccount);
         enterAmountInput.sendKeys(amount);
-        //или .setSelected(true) ?
         confirmCheckbox.click();
         sendTransferButton.click();
         return this;

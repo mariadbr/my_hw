@@ -21,11 +21,14 @@ public class UpdateNameTest extends BaseUiTest {
                 .open()
                 .openEditProfilePage()
                 .getPage(EditProfilePage.class)
-                .editProfileName(newName)
+                //.editProfileName(newName)
+                .enterNameAndWaitUntilStable(newName)
+                .saveChanges()
                 .checkAlertMessageAndAccept(BankAlert.NAME_UPDATED_SUCCESSFULLY.getMessage())
                 .refreshPage()
                 .getUserName()
-                .shouldBe(Condition.visible).shouldHave(Condition.exactText(newName));
+                .shouldBe(Condition.visible)
+                .shouldHave(Condition.exactText(newName));
 
         //проверка апи
         GetCustomerProfileResponse response = SessionStorage.getSessionData().getSteps().getProfile();
@@ -40,7 +43,9 @@ public class UpdateNameTest extends BaseUiTest {
                 .open()
                 .openEditProfilePage()
                 .getPage(EditProfilePage.class)
-                .editProfileName(RandomStringUtils.randomAlphabetic(2))
+                //.editProfileName(RandomStringUtils.randomAlphabetic(2))
+                .enterNameAndWaitUntilStable(RandomStringUtils.randomAlphabetic(2))
+                .saveChanges()
                 .checkAlertMessageAndAccept(BankAlert.NAME_MUST_CONTAIN_TWO_WORDS_WITH_LETTERS_ONLY.getMessage())
                 .refreshPage()
                 .getUserName()

@@ -4,6 +4,7 @@ import api.models.CreateUserRequest;
 import api.specs.RequestSpecs;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import common.utils.RetryUtils;
 import lombok.Getter;
 import org.openqa.selenium.Alert;
 
@@ -13,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Getter
 public abstract class BasePage<T extends BasePage> {
-    protected SelenideElement accountSelector = $(".account-selector");
+    protected SelenideElement accountSelector = $("select.account-selector");
     protected SelenideElement userName = $("span.user-name");
 
     abstract String url();
@@ -23,9 +24,24 @@ public abstract class BasePage<T extends BasePage> {
     }
 
     public T checkAlertMessageAndAccept(String... expectedMessages) {
-        Alert alert = switchTo().alert();
-        assertThat(alert.getText()).contains(expectedMessages);
-        alert.accept();
+        Alert alert = RetryUtils.retry(
+                () -> {
+                    try {
+                        return switchTo().alert();
+                    } catch (org.openqa.selenium.NoAlertPresentException e) {
+                        return null;
+                    }
+                },
+                result -> result != null,
+                5,
+                1000
+        );
+
+        try {
+            assertThat(alert.getText()).contains(expectedMessages);
+        } finally {
+            alert.accept();
+        }
         return (T) this;
     }
 

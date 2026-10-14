@@ -9,6 +9,7 @@ import common.extensions.WithAccountExtension;
 import common.extensions.DepositExtension;
 import common.extensions.UserSessionExtension;
 import iteration2.api.BaseTest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -28,6 +29,11 @@ public class BaseUiTest extends BaseTest {
         Configuration.browserCapabilities.setCapability("selenoid:options",
                 Map.of("enableVNC", true, "enableLog", true)
         );
+    }
+
+    @AfterEach
+    void closeBrowser() {
+        Selenide.closeWebDriver();
     }
 
     public static void authAsUser(String username, String password) {
