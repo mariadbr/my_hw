@@ -1,0 +1,75 @@
+#Анализ рапределения тестов между воркерами
+
+Thread ForkJoinPool-1-worker-1 : Test started iteration2.api.[4] 12 13
+Thread ForkJoinPool-1-worker-5 : Test started iteration2.api.[2] 4999.99
+Thread ForkJoinPool-1-worker-6 : Test started iteration2.api.userCanTransferValidAmountIntoSomeonesAccount()
+Thread ForkJoinPool-1-worker-8 : Test started iteration2.api.userCannotDepositAmountIntoNonExistentAccount()
+Thread ForkJoinPool-1-worker-9 : Test started iteration2.api.userCannotDepositNegativeAmountIntoOwnAccount()
+Thread ForkJoinPool-1-worker-1 : Test finished iteration2.api.[4] 12 13 , test duration 1959 ms
+Thread ForkJoinPool-1-worker-1 : Test started iteration2.api.[6]
+Thread ForkJoinPool-1-worker-5 : Test finished iteration2.api.[2] 4999.99 , test duration 2093 ms
+Thread ForkJoinPool-1-worker-8 : Test finished iteration2.api.userCannotDepositAmountIntoNonExistentAccount() , test duration 857 ms
+Thread ForkJoinPool-1-worker-8 : Test started iteration2.api.userCannotDepositAmountIntoSomeonesAccount()
+Thread ForkJoinPool-1-worker-5 : Test started iteration2.api.[1] 0.01
+Thread ForkJoinPool-1-worker-9 : Test finished iteration2.api.userCannotDepositNegativeAmountIntoOwnAccount() , test duration 1187 ms
+Thread ForkJoinPool-1-worker-9 : Test started iteration2.api.[1] 5000.01
+Thread ForkJoinPool-1-worker-1 : Test finished iteration2.api.[6]  , test duration 998 ms
+Thread ForkJoinPool-1-worker-1 : Test started iteration2.api.[1] Stas
+Thread ForkJoinPool-1-worker-6 : Test finished iteration2.api.userCanTransferValidAmountIntoSomeonesAccount() , test duration 2574 ms
+Thread ForkJoinPool-1-worker-6 : Test started iteration2.api.userCannotTransferNegativeAmountIntoOwnAccount()
+Thread ForkJoinPool-1-worker-5 : Test finished iteration2.api.[1] 0.01 , test duration 1012 ms
+Thread ForkJoinPool-1-worker-9 : Test finished iteration2.api.[1] 5000.01 , test duration 1034 ms
+Thread ForkJoinPool-1-worker-9 : Test started iteration2.api.[1] 10000.01
+Thread ForkJoinPool-1-worker-1 : Test finished iteration2.api.[1] Stas , test duration 1094 ms
+Thread ForkJoinPool-1-worker-1 : Test started iteration2.api.[2] StasMar
+Thread ForkJoinPool-1-worker-4 : Test started iteration2.ui.userCannotUpdateNameWithInvalidValue()
+Thread ForkJoinPool-1-worker-8 : Test finished iteration2.api.userCannotDepositAmountIntoSomeonesAccount() , test duration 2450 ms
+Thread ForkJoinPool-1-worker-8 : Test started iteration2.api.userCanUpdateNameInProfile()
+Thread ForkJoinPool-1-worker-5 : Test started iteration2.api.[3] StasMar
+Thread ForkJoinPool-1-worker-6 : Test finished iteration2.api.userCannotTransferNegativeAmountIntoOwnAccount() , test duration 1878 ms
+Thread ForkJoinPool-1-worker-6 : Test started iteration2.api.userCannotTransferAmountBiggerThanAvailableIntoSomeonesAccount()
+Thread ForkJoinPool-1-worker-7 : Test started iteration2.ui.userCanDepositValidAmount()
+Thread ForkJoinPool-1-worker-2 : Test started iteration2.ui.userCannotDepositInvalidAmount()
+Thread ForkJoinPool-1-worker-1 : Test finished iteration2.api.[2] StasMar , test duration 1184 ms
+Thread ForkJoinPool-1-worker-1 : Test started iteration2.api.[5] St@s Sta$
+Thread ForkJoinPool-1-worker-3 : Test started iteration2.ui.userCanTransferValidAmount()
+Thread ForkJoinPool-1-worker-8 : Test finished iteration2.api.userCanUpdateNameInProfile() , test duration 1138 ms
+Thread ForkJoinPool-1-worker-8 : Test started iteration2.api.[1] 0.01
+Thread ForkJoinPool-1-worker-5 : Test finished iteration2.api.[3] StasMar  , test duration 1392 ms
+Thread ForkJoinPool-1-worker-5 : Test started iteration2.api.[2] 9999.99
+Thread ForkJoinPool-1-worker-1 : Test finished iteration2.api.[5] St@s Sta$ , test duration 1854 ms
+Thread ForkJoinPool-1-worker-9 : Test finished iteration2.api.[1] 10000.01 , test duration 3670 ms
+Thread ForkJoinPool-1-worker-2 : Test finished iteration2.ui.userCannotDepositInvalidAmount() , test duration 2539 ms
+Thread ForkJoinPool-1-worker-7 : Test finished iteration2.ui.userCanDepositValidAmount() , test duration 3114 ms
+Thread ForkJoinPool-1-worker-10 : Test started iteration2.ui.userCanUpdateName()
+Thread ForkJoinPool-1-worker-6 : Test finished iteration2.api.userCannotTransferAmountBiggerThanAvailableIntoSomeonesAccount() , test duration 3297 ms
+Thread ForkJoinPool-1-worker-8 : Test finished iteration2.api.[1] 0.01 , test duration 2578 ms
+Thread ForkJoinPool-1-worker-5 : Test finished iteration2.api.[2] 9999.99 , test duration 2331 ms
+Thread ForkJoinPool-1-worker-3 : Test finished iteration2.ui.userCanTransferValidAmount() , test duration 4947 ms
+Thread ForkJoinPool-1-worker-11 : Test started iteration2.ui.userCannotTransferInvalidAmount()
+Thread ForkJoinPool-1-worker-11 : Test finished iteration2.ui.userCannotTransferInvalidAmount() , test duration 1389 ms
+Thread ForkJoinPool-1-worker-4 : Test finished iteration2.ui.userCannotUpdateNameWithInvalidValue() , test duration 12121 ms
+Thread ForkJoinPool-1-worker-10 : Test finished iteration2.ui.userCanUpdateName() , test duration 13117 ms
+
+
+
+#Таблица времени тестов на воркер (25 тестов на 11 воркеров)
+
+| Worker                   | Test 1                                                         | Время 1 (ms) | Test 2                                                          | Время 2 (ms) | Test 3                                                                          | Время 3 (ms) | Test 4                     | Время 4 (ms) | Test 5                       | Время 5 (ms) | Суммарное время (ms) |
+| ------------------------ | -------------------------------------------------------------- | ------------ | --------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------- | ------------ | -------------------------- | ------------ | ---------------------------- | ------------ | -------------------- |
+| ForkJoinPool-1-worker-1  | iteration2.api.[4] 12 13                                       | 1959         | iteration2.api.[6]                                              | 998          | iteration2.api.[1] Stas                                                         | 1094         | iteration2.api.[2] StasMar | 1184         | iteration2.api.[5] St@s Sta$ | 1854         | 7089                 |
+| ForkJoinPool-1-worker-2  | iteration2.ui.userCannotDepositInvalidAmount()                 | 2539         | —                                                               | —            | —                                                                               | —            | —                          | —            | —                            | —            | 2539                 |
+| ForkJoinPool-1-worker-3  | iteration2.ui.userCanTransferValidAmount()                     | 4947         | —                                                               | —            | —                                                                               | —            | —                          | —            | —                            | —            | 4947                 |
+| ForkJoinPool-1-worker-4  | iteration2.ui.userCannotUpdateNameWithInvalidValue()           | 12121        | —                                                               | —            | —                                                                               | —            | —                          | —            | —                            | —            | 12121                |
+| ForkJoinPool-1-worker-5  | iteration2.api.[2] 4999.99                                     | 2093         | iteration2.api.[1] 0.01                                         | 1012         | iteration2.api.[3] StasMar                                                      | 1392         | iteration2.api.[2] 9999.99 | 2331         | —                            | —            | 6828                 |
+| ForkJoinPool-1-worker-6  | iteration2.api.userCanTransferValidAmountIntoSomeonesAccount() | 2574         | iteration2.api.userCannotTransferNegativeAmountIntoOwnAccount() | 1878         | iteration2.api.userCannotTransferAmountBiggerThanAvailableIntoSomeonesAccount() | 3297         | —                          | —            | —                            | —            | 7749                 |
+| ForkJoinPool-1-worker-7  | iteration2.ui.userCanDepositValidAmount()                      | 3114         | —                                                               | —            | —                                                                               | —            | —                          | —            | —                            | —            | 3114                 |
+| ForkJoinPool-1-worker-8  | iteration2.api.userCannotDepositAmountIntoNonExistentAccount() | 857          | iteration2.api.userCannotDepositAmountIntoSomeonesAccount()     | 2450         | iteration2.api.userCanUpdateNameInProfile()                                     | 1138         | iteration2.api.[1] 0.01    | 2578         | —                            | —            | 7023                 |
+| ForkJoinPool-1-worker-9  | iteration2.api.userCannotDepositNegativeAmountIntoOwnAccount() | 1187         | iteration2.api.[1] 5000.01                                      | 1034         | iteration2.api.[1] 10000.01                                                     | 3670         | —                          | —            | —                            | —            | 5891                 |
+| ForkJoinPool-1-worker-10 | iteration2.ui.userCanUpdateName()                              | 13117        | —                                                               | —            | —                                                                               | —            | —                          | —            | —                            | —            | 13117                |
+| ForkJoinPool-1-worker-11 | iteration2.ui.userCannotTransferInvalidAmount()                | 1389         | —                                                               | —            | —                                                                               | —            | —                          | —            | —                            | —            | 1389                 |
+
+
+
+22131 ms - время тестов
+24303 ms - время всего запуска maven

@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public class SessionStorage {
-    private static SessionStorage INSTANCE = new SessionStorage();
+    private static ThreadLocal<SessionStorage> INSTANCE = ThreadLocal.withInitial(SessionStorage::new);
 
     private LinkedHashMap<CreateUserRequest, UserSessionData> usersMap = new LinkedHashMap<>();
 
@@ -16,7 +16,7 @@ public class SessionStorage {
 
     public static void addUsers(List<CreateUserRequest> users ) {
         for (CreateUserRequest user : users) {
-            INSTANCE.usersMap.put(user, new UserSessionData(user));
+            INSTANCE.get().usersMap.put(user, new UserSessionData(user));
         }
     }
 
@@ -26,7 +26,7 @@ public class SessionStorage {
      * @return Объект CreateUserRequest, соответствующий указанному порядковому номеру.
      */
     public static CreateUserRequest getUser(int number) {
-        return new ArrayList<>(INSTANCE.usersMap.keySet()).get(number - 1);
+        return new ArrayList<>(INSTANCE.get().usersMap.keySet()).get(number - 1);
     }
 
     public static CreateUserRequest  getUser() {
@@ -34,7 +34,7 @@ public class SessionStorage {
     }
 
     public static UserSessionData getSessionData(int userNumber) {
-        return new ArrayList<>(INSTANCE.usersMap.values()).get(userNumber - 1);
+        return new ArrayList<>(INSTANCE.get().usersMap.values()).get(userNumber - 1);
     }
 
     public static UserSessionData getSessionData() {
@@ -54,11 +54,11 @@ public class SessionStorage {
     }
 
     public static void clear() {
-        INSTANCE.usersMap.clear();
+        INSTANCE.get().usersMap.clear();
     }
 
     public static int getSessionCount() {
-        return INSTANCE.usersMap.size();
+        return INSTANCE.get().usersMap.size();
     }
 
 }
