@@ -2,12 +2,14 @@ package iteration2.ui;
 
 import api.configs.Config;
 import api.models.CreateUserRequest;
+import api.requests.steps.AdminSteps;
 import api.specs.RequestSpecs;
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
 import common.extensions.WithAccountExtension;
 import common.extensions.DepositExtension;
 import common.extensions.UserSessionExtension;
+import common.storage.SessionStorage;
 import iteration2.api.BaseTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -30,6 +32,11 @@ public class BaseUiTest extends BaseTest {
         Configuration.browserCapabilities.setCapability("selenoid:options",
                 Map.of("enableVNC", true, "enableLog", true)
         );
+    }
+
+    @AfterEach
+    public void cleanAll() {
+        SessionStorage.getAllUsersIds().forEach(AdminSteps::deleteById);
     }
 
     @AfterEach

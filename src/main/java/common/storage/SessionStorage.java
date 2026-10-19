@@ -2,6 +2,7 @@ package common.storage;
 
 import api.models.CreateAccountResponse;
 import api.models.CreateUserRequest;
+import api.requests.steps.UserSteps;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -16,7 +17,9 @@ public class SessionStorage {
 
     public static void addUsers(List<CreateUserRequest> users ) {
         for (CreateUserRequest user : users) {
-            INSTANCE.get().usersMap.put(user, new UserSessionData(user));
+            Long userId = new UserSteps(user.getUsername(), user.getPassword()).getProfile().getId();
+
+            INSTANCE.get().usersMap.put(user, new UserSessionData(user, userId));
         }
     }
 
@@ -31,6 +34,10 @@ public class SessionStorage {
 
     public static CreateUserRequest  getUser() {
         return getUser(1);
+    }
+
+    public static List<Long> getAllUsersIds() {
+        return INSTANCE.get().usersMap.values().stream().map(UserSessionData::getId).toList();
     }
 
     public static UserSessionData getSessionData(int userNumber) {
