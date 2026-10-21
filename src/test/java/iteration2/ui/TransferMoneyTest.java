@@ -3,6 +3,7 @@ package iteration2.ui;
 import api.generators.RandomData;
 import api.models.GetCustomerAccountsResponse;
 import api.models.UserBalanceDefaults;
+import common.annotations.TestVersion;
 import common.annotations.WithAccount;
 import common.annotations.Deposit;
 import common.annotations.UserSession;
@@ -11,6 +12,9 @@ import org.junit.jupiter.api.Test;
 import ui.BankAlert;
 import ui.UserDashboard;
 import ui.UserTransferPage;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import static org.assertj.core.api.Assertions.within;
 
@@ -21,8 +25,12 @@ public class TransferMoneyTest extends BaseUiTest {
     @UserSession(2)
     @WithAccount
     @Deposit(user = 1, amount = DEPOSIT_AMOUNT) //сюда не могу передать енум, нужно compile-time constant
+    @TestVersion({"with_database_with_fix"})
     public void userCanTransferValidAmount() {
-        float amount = RandomData.getRandomPositiveFloat();
+        //float amount = RandomData.getRandomPositiveFloat();
+        float amount = BigDecimal.valueOf(RandomData.getRandomPositiveFloat())
+                .setScale(2, RoundingMode.HALF_UP)
+                .floatValue();
 
         String firstUserAccountNum = SessionStorage.getAccount().getAccountNumber();
         String secondUserAccountNum = SessionStorage.getAccount(2, 1).getAccountNumber();
@@ -54,6 +62,7 @@ public class TransferMoneyTest extends BaseUiTest {
     @UserSession(value = 2, auth = 1)
     @WithAccount
     @Deposit(user = 1, amount = DEPOSIT_AMOUNT)
+    @TestVersion({"with_database_with_fix"})
     public void userCannotTransferInvalidAmount() {
         String firstUserAccountNumber = SessionStorage.getAccount().getAccountNumber();
         String secondUserAccountNumber = SessionStorage.getAccount(2, 1).getAccountNumber();
@@ -63,7 +72,7 @@ public class TransferMoneyTest extends BaseUiTest {
                 .openTransferPage()
                 .getPage(UserTransferPage.class)
                 .makeTransfer(firstUserAccountNumber, secondUserAccountNumber, String.valueOf(RandomData.getRandomNegativeFloat()))
-                .checkAlertMessageAndAccept(BankAlert.TRANSFER_MUST_BE_AT_LEAST_001.getMessage());
+                .checkAlertMessageAndAccept(BankAlert.ERROR_INVALID_TRANSFER_INSUFFICIENT_FUNDS_OR_INVALID_ACCOUNTS.getMessage());
 
         //проверка через api
         GetCustomerAccountsResponse firstUserAccount = SessionStorage.getSessionData(1).getSteps().getAccounts()

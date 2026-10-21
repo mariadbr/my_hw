@@ -4,6 +4,7 @@ import api.generators.RandomData;
 import api.generators.RandomModelGenerator;
 import api.models.*;
 import api.models.comparison.ModelAssertions;
+import common.annotations.TestVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -14,14 +15,17 @@ import api.requests.steps.UserSteps;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 import static api.models.UserBalanceDefaults.MAX_DEPOSIT_AMOUNT;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 
 public class TransferMoneyTest extends BaseTest {
-
     @Test
+    @TestVersion({"with_database_with_fix"})
+//    "with_deletion" ?
     public void userCanTransferValidAmountIntoSomeonesAccount() {
         //создать 1 юзера
         CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();
@@ -46,7 +50,10 @@ public class TransferMoneyTest extends BaseTest {
         transferMoneyRequest.setSenderAccountId(createFirstUserAccountResponse.getId());
         transferMoneyRequest.setReceiverAccountId(createSecondUserAccountResponse.getId());
 
-        float transferAmount = transferMoneyRequest.getAmount();
+//        float transferAmount = transferMoneyRequest.getAmount();
+        float transferAmount = BigDecimal.valueOf(transferMoneyRequest.getAmount())
+                .setScale(2, RoundingMode.HALF_UP)
+                .floatValue();
 
         TransferMoneyResponse transferMoneyResponse = new UserSteps(createFirstUserRequest.getUsername(), createFirstUserRequest.getPassword())
                 .transferMoney(transferMoneyRequest);
@@ -112,6 +119,7 @@ public class TransferMoneyTest extends BaseTest {
             //positive cases
             {0.01f, 9999.99f})
     @ParameterizedTest
+    @TestVersion({"with_deletion", "with_database_with_fix"})
     public void checkBoundaryValuesTransferBetweenOwnAccountsPositiveCases(float amount) {
         //создать юзера
         CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
@@ -168,6 +176,7 @@ public class TransferMoneyTest extends BaseTest {
     }
 
     @Test
+    @TestVersion({"with_database_with_fix"})
     public void userCannotTransferNegativeAmountIntoOwnAccount() {
         //создать юзера
         CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
@@ -193,7 +202,7 @@ public class TransferMoneyTest extends BaseTest {
         new CrudRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 Endpoint.ACCOUNTS_TRANSFER,
-                ResponseSpecs.requestReturnsBadRequestWithText(AlertMessage.TRANSFER_AMOUNT_MUST_BE_AT_LEAST_001.getMessage()))
+                ResponseSpecs.requestReturnsBadRequestWithText(AlertMessage.INVALID_TRANSFER_INSUFFICIENT_FUNDS_OR_INVALID_ACCOUNTS.getMessage()))
                 .post(transferMoneyRequest);
 
         //проверка 1 и 2 счета
@@ -223,6 +232,7 @@ public class TransferMoneyTest extends BaseTest {
 
     @ParameterizedTest
     @ValueSource(floats = {10000.01f})
+    @TestVersion({"with_deletion", "with_database_with_fix"})
     public void checkBoundaryValuesTransferToSomeonesAccountNegativeCase(float amount) {
         //создать 1 юзера
         CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();
@@ -284,6 +294,7 @@ public class TransferMoneyTest extends BaseTest {
     }
 
     @Test
+    @TestVersion({"with_deletion", "with_database_with_fix"})
     public void userCannotTransferAmountBiggerThanAvailableIntoSomeonesAccount() {
         //создать 1 юзера
         CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();

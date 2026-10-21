@@ -1,6 +1,6 @@
 services:
   backend:
-    image: nobugsme/nbank:with_database
+    image: nobugsme/nbank:with_database_with_fix
     ports:
       - "4111:4111"
     environment:

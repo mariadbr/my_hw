@@ -4,6 +4,7 @@ import api.models.GetAllUsersResponse;
 import api.requests.steps.AdminSteps;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+import common.extensions.TestVersionExtension;
 import common.extensions.TimingExtension;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterAll;
@@ -15,7 +16,8 @@ import java.util.List;
 
 import static io.restassured.RestAssured.given;
 
-@ExtendWith(TimingExtension.class)
+//@ExtendWith(TimingExtension.class)
+@ExtendWith(TestVersionExtension.class)
 public class BaseTest {
     protected SoftAssertions softly;
     protected static final float MARGIN_OF_ERROR = 0.001f;

@@ -4,6 +4,7 @@ import api.generators.RandomData;
 import api.generators.RandomModelGenerator;
 import api.models.*;
 import api.models.comparison.ModelAssertions;
+import common.annotations.TestVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -21,6 +22,7 @@ public class DepositMoneyTest extends BaseTest {
             //positive cases
             0.01f, 4999.99f})
     @ParameterizedTest
+    @TestVersion({"with_database_with_fix", "with_deletion"})
     public void checkBoundaryValuesDepositPositiveCases(float amount) {
         //создать юзера
         CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
@@ -55,6 +57,7 @@ public class DepositMoneyTest extends BaseTest {
 
     @ParameterizedTest
     @ValueSource(floats = {5000.01f})
+    @TestVersion({"with_database_with_fix"})
     public void checkBoundaryValuesDepositNegativeCase(float amount) {
         //создать юзера
         CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
@@ -71,7 +74,7 @@ public class DepositMoneyTest extends BaseTest {
         new CrudRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 Endpoint.ACCOUNTS_DEPOSIT,
-                ResponseSpecs.requestReturnsBadRequestWithText(AlertMessage.DEPOSIT_AMOUNT_CANNOT_EXCEED_5000.getMessage()))
+                ResponseSpecs.requestReturnsBadRequestWithText(AlertMessage.DEPOSIT_AMOUNT_EXCEEDS_5000.getMessage()))
                 .post(depositMoneyRequest);
 
         //проверка
@@ -89,6 +92,7 @@ public class DepositMoneyTest extends BaseTest {
     }
 
     @Test
+    @TestVersion({"with_database_with_fix"})
     public void userCannotDepositNegativeAmountIntoOwnAccount() {
         //создать юзера
         CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
@@ -106,7 +110,7 @@ public class DepositMoneyTest extends BaseTest {
         new CrudRequester(
                 RequestSpecs.authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword()),
                 Endpoint.ACCOUNTS_DEPOSIT,
-                ResponseSpecs.requestReturnsBadRequestWithText(AlertMessage.DEPOSIT_AMOUNT_MUST_BE_AT_LEAST_001.getMessage()))
+                ResponseSpecs.requestReturnsBadRequestWithText(AlertMessage.INVALID_ACCOUNT_OR_AMOUNT.getMessage()))
                 .post(depositMoneyRequest);
 
         //проверка
@@ -124,6 +128,7 @@ public class DepositMoneyTest extends BaseTest {
     }
 
     @Test
+    @TestVersion({"with_deletion", "with_database_with_fix"})
     public void userCannotDepositAmountIntoSomeonesAccount() {
         //создать 1 юзера
         CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();
@@ -168,6 +173,7 @@ public class DepositMoneyTest extends BaseTest {
     }
 
     @Test
+    @TestVersion({"with_deletion", "with_database_with_fix"})
     public void userCannotDepositAmountIntoNonExistentAccount() {
         //создать юзера
         CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();

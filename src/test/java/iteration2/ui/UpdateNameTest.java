@@ -3,6 +3,7 @@ package iteration2.ui;
 import api.generators.RandomData;
 import api.models.GetCustomerProfileResponse;
 import com.codeborne.selenide.Condition;
+import common.annotations.TestVersion;
 import common.annotations.UserSession;
 import common.storage.SessionStorage;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -14,6 +15,7 @@ import ui.UserDashboard;
 public class UpdateNameTest extends BaseUiTest {
     @Test
     @UserSession
+    @TestVersion({"with_deletion", "with_database_with_fix"})
     public void userCanUpdateName() {
         String newName = RandomData.getRandomValidName();
 
@@ -38,6 +40,7 @@ public class UpdateNameTest extends BaseUiTest {
 
     @Test
     @UserSession
+    @TestVersion({"with_deletion", "with_database_with_fix"})
     public void userCannotUpdateNameWithInvalidValue() {
         new UserDashboard()
                 .open()

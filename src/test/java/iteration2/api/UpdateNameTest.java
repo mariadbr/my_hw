@@ -3,6 +3,7 @@ package iteration2.api;
 import api.generators.RandomData;
 import api.generators.RandomModelGenerator;
 import api.models.*;
+import common.annotations.TestVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -15,6 +16,7 @@ import api.specs.ResponseSpecs;
 
 public class UpdateNameTest extends BaseTest {
     @Test
+    @TestVersion({"with_deletion", "with_database_with_fix"})
     public void userCanUpdateNameInProfile() {
         CreateUserRequest createUserRequest = RandomModelGenerator.generate(CreateUserRequest.class);
 
@@ -54,6 +56,7 @@ public class UpdateNameTest extends BaseTest {
             //negative cases
             {"Stas", "StasMar", "StasMar ", "12 13", "St@s Sta$", ""})
     @ParameterizedTest
+    @TestVersion({"with_deletion", "with_database_with_fix"})
     public void userCannotUpdateNameToInvalidName(String name) {
         CreateUserRequest createUserRequest = RandomModelGenerator.generate(CreateUserRequest.class);
 

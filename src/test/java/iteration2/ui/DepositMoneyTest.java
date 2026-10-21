@@ -2,6 +2,7 @@ package iteration2.ui;
 
 import api.generators.RandomData;
 import api.models.GetCustomerAccountsResponse;
+import common.annotations.TestVersion;
 import common.annotations.WithAccount;
 import common.annotations.UserSession;
 import common.storage.SessionStorage;
@@ -10,14 +11,21 @@ import ui.BankAlert;
 import ui.UserDashboard;
 import ui.UserDepositPage;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 public class DepositMoneyTest extends BaseUiTest {
     @Test
     @UserSession
     @WithAccount
+    @TestVersion({"with_database_with_fix"})
     public void userCanDepositValidAmount() {
         String accountNumber = SessionStorage.getAccount().getAccountNumber();
 
-        float amount = RandomData.getRandomPositiveFloat();
+//        float amount = RandomData.getRandomPositiveFloat();
+        float amount = BigDecimal.valueOf(RandomData.getRandomPositiveFloat())
+                .setScale(2, RoundingMode.HALF_UP)
+                .floatValue();
 
         new UserDashboard()
                 .open()
@@ -38,6 +46,7 @@ public class DepositMoneyTest extends BaseUiTest {
     @Test
     @UserSession
     @WithAccount
+    @TestVersion({"with_deletion", "with_database_with_fix"})
     public void userCannotDepositInvalidAmount() {
         String accountNumber = SessionStorage.getAccount().getAccountNumber();
 
