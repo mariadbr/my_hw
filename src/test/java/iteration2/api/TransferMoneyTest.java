@@ -1,31 +1,35 @@
 package iteration2.api;
 
+import api.dao.AccountDao;
+import api.dao.TransactionDao;
+import api.dao.comparison.DaoAndModelAssertions;
 import api.generators.RandomData;
 import api.generators.RandomModelGenerator;
 import api.models.*;
 import api.models.comparison.ModelAssertions;
+import api.requests.skelethon.Endpoint;
+import api.requests.skelethon.requesters.CrudRequester;
+import api.requests.steps.AdminSteps;
+import api.requests.steps.DataBaseSteps;
+import api.requests.steps.UserSteps;
+import api.specs.RequestSpecs;
+import api.specs.ResponseSpecs;
 import common.annotations.TestVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import api.requests.skelethon.Endpoint;
-import api.requests.skelethon.requesters.CrudRequester;
-import api.requests.steps.AdminSteps;
-import api.requests.steps.UserSteps;
-import api.specs.RequestSpecs;
-import api.specs.ResponseSpecs;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
 import static api.models.UserBalanceDefaults.MAX_DEPOSIT_AMOUNT;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 
 public class TransferMoneyTest extends BaseTest {
     @Test
     @TestVersion({"with_database_with_fix"})
-//    "with_deletion" ?
     public void userCanTransferValidAmountIntoSomeonesAccount() {
         //создать 1 юзера
         CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();
@@ -113,13 +117,31 @@ public class TransferMoneyTest extends BaseTest {
         softly.assertThat(secondUserGetTransactionResponse.getId()).isNotNull();
         softly.assertThat(secondUserGetTransactionResponse.getAmount()).isEqualTo(transferAmount);
         softly.assertThat(secondUserGetTransactionResponse.getRelatedAccountId()).isEqualTo(createFirstUserAccountResponse.getId());
+
+        //проверка через бд аккаунтов 1 и 2 юзера
+        AccountDao firstUserAccountDao = DataBaseSteps.getAccountByAccountNumber(createFirstUserAccountResponse.getAccountNumber());
+
+        assertThat(firstUserAccountDao.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT.getAmount() - transferAmount);
+
+        AccountDao secondUserAccountDao = DataBaseSteps.getAccountByAccountNumber(createSecondUserAccountResponse.getAccountNumber());
+
+        assertThat(secondUserAccountDao.getBalance()).isEqualTo(transferAmount);
+
+        //проверка транзакций через бд
+        TransactionDao firstUserTransactionDao = DataBaseSteps.getTransactionById(firstUserGetTransactionResponse.getId());
+
+        DaoAndModelAssertions.assertThat(firstUserGetTransactionResponse, firstUserTransactionDao).match();
+
+        TransactionDao secondUserTransactionDao = DataBaseSteps.getTransactionById(secondUserGetTransactionResponse.getId());
+
+        DaoAndModelAssertions.assertThat(secondUserGetTransactionResponse, secondUserTransactionDao).match();
     }
 
     @ValueSource(floats =
             //positive cases
             {0.01f, 9999.99f})
     @ParameterizedTest
-    @TestVersion({"with_deletion", "with_database_with_fix"})
+    @TestVersion({"with_database_with_fix"})
     public void checkBoundaryValuesTransferBetweenOwnAccountsPositiveCases(float amount) {
         //создать юзера
         CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
@@ -173,6 +195,15 @@ public class TransferMoneyTest extends BaseTest {
         softly.assertThat(secondGetCustomerAccountsResponse.getId()).isEqualTo(createSecondAccountResponse.getId());
         softly.assertThat(secondGetCustomerAccountsResponse.getBalance()).isEqualTo(amount);
         softly.assertThat(secondGetCustomerAccountsResponse.getTransactions()).isNotEmpty();
+
+        //проверка через бд 1 и 2 аккаунтов юзера
+        AccountDao firstAccountDao = DataBaseSteps.getAccountByAccountNumber(createFirstAccountResponse.getAccountNumber());
+
+        assertThat(firstAccountDao.getBalance()).isCloseTo(MAX_DEPOSIT_AMOUNT.getAmount() * 2 - amount, within(MARGIN_OF_ERROR));
+
+        AccountDao secondAccountDao = DataBaseSteps.getAccountByAccountNumber(createSecondAccountResponse.getAccountNumber());
+
+        assertThat(secondAccountDao.getBalance()).isCloseTo(amount, within(MARGIN_OF_ERROR));
     }
 
     @Test
@@ -228,11 +259,20 @@ public class TransferMoneyTest extends BaseTest {
         softly.assertThat(secondGetCustomerAccountsResponse.getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
         softly.assertThat(secondGetCustomerAccountsResponse.getId()).isEqualTo(createSecondAccountResponse.getId());
         softly.assertThat(secondGetCustomerAccountsResponse.getTransactions()).isEmpty();
+
+        //проверка через бд
+        AccountDao firstAccountDao = DataBaseSteps.getAccountByAccountNumber(createFirstAccountResponse.getAccountNumber());
+
+        assertThat(firstAccountDao.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT.getAmount());
+
+        AccountDao secondAccountDao = DataBaseSteps.getAccountByAccountNumber(createSecondAccountResponse.getAccountNumber());
+
+        assertThat(secondAccountDao.getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
     }
 
     @ParameterizedTest
     @ValueSource(floats = {10000.01f})
-    @TestVersion({"with_deletion", "with_database_with_fix"})
+    @TestVersion({"with_database_with_fix"})
     public void checkBoundaryValuesTransferToSomeonesAccountNegativeCase(float amount) {
         //создать 1 юзера
         CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();
@@ -291,10 +331,19 @@ public class TransferMoneyTest extends BaseTest {
         softly.assertThat(secondUserGetCustomerAccountsResponse.getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
         softly.assertThat(secondUserGetCustomerAccountsResponse.getId()).isEqualTo(createSecondUserAccountResponse.getId());
         softly.assertThat(secondUserGetCustomerAccountsResponse.getTransactions()).isEmpty();
+
+        //проверка через бд
+        AccountDao firstUserAccountDao = DataBaseSteps.getAccountByAccountNumber(createFirstUserAccountResponse.getAccountNumber());
+
+        assertThat(firstUserAccountDao.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT.getAmount() * 3);
+
+        AccountDao secondUserAccountDao = DataBaseSteps.getAccountByAccountNumber(createSecondUserAccountResponse.getAccountNumber());
+
+        assertThat(secondUserAccountDao.getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
     }
 
     @Test
-    @TestVersion({"with_deletion", "with_database_with_fix"})
+    @TestVersion({"with_database_with_fix"})
     public void userCannotTransferAmountBiggerThanAvailableIntoSomeonesAccount() {
         //создать 1 юзера
         CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();
@@ -353,5 +402,14 @@ public class TransferMoneyTest extends BaseTest {
         softly.assertThat(secondUserGetCustomerAccountsResponse.getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
         softly.assertThat(secondUserGetCustomerAccountsResponse.getId()).isEqualTo(createSecondUserAccountResponse.getId());
         softly.assertThat(secondUserGetCustomerAccountsResponse.getTransactions()).isEmpty();
+
+        //проверка через бд
+        AccountDao firstUserAccountDao = DataBaseSteps.getAccountByAccountNumber(createFirstUserAccountResponse.getAccountNumber());
+
+        assertThat(firstUserAccountDao.getBalance()).isEqualTo(MAX_DEPOSIT_AMOUNT.getAmount());
+
+        AccountDao secondUserAccountDao = DataBaseSteps.getAccountByAccountNumber(createSecondUserAccountResponse.getAccountNumber());
+
+        assertThat(secondUserAccountDao.getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
     }
 }

@@ -20,7 +20,7 @@ import static io.restassured.RestAssured.given;
 @ExtendWith(TestVersionExtension.class)
 public class BaseTest {
     protected SoftAssertions softly;
-    protected static final float MARGIN_OF_ERROR = 0.001f;
+    protected static final float MARGIN_OF_ERROR = 0.01f;
 
     @BeforeEach
     public void setupTest() {

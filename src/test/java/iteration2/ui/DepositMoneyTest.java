@@ -19,6 +19,7 @@ public class DepositMoneyTest extends BaseUiTest {
     @UserSession
     @WithAccount
     @TestVersion({"with_database_with_fix"})
+//    "with_deletion"?
     public void userCanDepositValidAmount() {
         String accountNumber = SessionStorage.getAccount().getAccountNumber();
 

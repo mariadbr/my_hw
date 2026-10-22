@@ -24,8 +24,9 @@ public class TransferMoneyTest extends BaseUiTest {
     @Test
     @UserSession(2)
     @WithAccount
-    @Deposit(user = 1, amount = DEPOSIT_AMOUNT) //сюда не могу передать енум, нужно compile-time constant
+    @Deposit(user = 1, amount = DEPOSIT_AMOUNT)
     @TestVersion({"with_database_with_fix"})
+    //    "with_deletion"?
     public void userCanTransferValidAmount() {
         //float amount = RandomData.getRandomPositiveFloat();
         float amount = BigDecimal.valueOf(RandomData.getRandomPositiveFloat())

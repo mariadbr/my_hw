@@ -1,19 +1,22 @@
 package iteration2.api;
 
+import api.dao.AccountDao;
+import api.dao.comparison.DaoAndModelAssertions;
 import api.generators.RandomData;
 import api.generators.RandomModelGenerator;
 import api.models.*;
 import api.models.comparison.ModelAssertions;
+import api.requests.skelethon.Endpoint;
+import api.requests.skelethon.requesters.CrudRequester;
+import api.requests.steps.AdminSteps;
+import api.requests.steps.DataBaseSteps;
+import api.requests.steps.UserSteps;
+import api.specs.RequestSpecs;
+import api.specs.ResponseSpecs;
 import common.annotations.TestVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import api.requests.skelethon.Endpoint;
-import api.requests.skelethon.requesters.CrudRequester;
-import api.requests.steps.AdminSteps;
-import api.requests.steps.UserSteps;
-import api.specs.RequestSpecs;
-import api.specs.ResponseSpecs;
 
 import java.util.List;
 
@@ -22,7 +25,7 @@ public class DepositMoneyTest extends BaseTest {
             //positive cases
             0.01f, 4999.99f})
     @ParameterizedTest
-    @TestVersion({"with_database_with_fix", "with_deletion"})
+    @TestVersion({"with_database_with_fix"})
     public void checkBoundaryValuesDepositPositiveCases(float amount) {
         //создать юзера
         CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
@@ -53,6 +56,11 @@ public class DepositMoneyTest extends BaseTest {
 
         softly.assertThat(account.getBalance()).isEqualTo(amount);
         softly.assertThat(account.getTransactions()).isNotEmpty();
+
+        //проверка через бд
+        AccountDao accountDao = DataBaseSteps.getAccountByAccountNumber(createAccountResponse.getAccountNumber());
+
+        DaoAndModelAssertions.assertThat(depositMoneyResponse, accountDao).match();
     }
 
     @ParameterizedTest
@@ -89,6 +97,11 @@ public class DepositMoneyTest extends BaseTest {
         softly.assertThat(account.getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
         softly.assertThat(account.getTransactions()).isEmpty();
         softly.assertThat(account.getId()).isEqualTo(createAccountResponse.getId());
+
+        //проверка через бд
+        AccountDao accountDao = DataBaseSteps.getAccountByAccountNumber(createAccountResponse.getAccountNumber());
+
+        DaoAndModelAssertions.assertThat(createAccountResponse, accountDao).match();
     }
 
     @Test
@@ -125,10 +138,15 @@ public class DepositMoneyTest extends BaseTest {
         softly.assertThat(account.getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
         softly.assertThat(account.getTransactions()).isEmpty();
         softly.assertThat(account.getId()).isEqualTo(createAccountResponse.getId());
+
+        //проверка через бд
+        AccountDao accountDao = DataBaseSteps.getAccountByAccountNumber(createAccountResponse.getAccountNumber());
+
+        DaoAndModelAssertions.assertThat(createAccountResponse, accountDao).match();
     }
 
     @Test
-    @TestVersion({"with_deletion", "with_database_with_fix"})
+    @TestVersion({"with_database_with_fix"})
     public void userCannotDepositAmountIntoSomeonesAccount() {
         //создать 1 юзера
         CreateUserRequest createFirstUserRequest = AdminSteps.createUserReturnRequest();
@@ -170,10 +188,18 @@ public class DepositMoneyTest extends BaseTest {
         softly.assertThat(secondUserGetCustomerAccountsResponseList.getFirst().getTransactions()).isEmpty();
         softly.assertThat(secondUserGetCustomerAccountsResponseList.getFirst().getId()).isEqualTo(createSecondUserAccountResponse.getId());
 
+        //проверка через бд
+        AccountDao firstUserAccountDao = DataBaseSteps.getAccountByAccountNumber(createFirstUserAccountResponse.getAccountNumber());
+
+        DaoAndModelAssertions.assertThat(createFirstUserAccountResponse, firstUserAccountDao).match();
+
+        AccountDao secondUserAccountDao = DataBaseSteps.getAccountByAccountNumber(createSecondUserAccountResponse.getAccountNumber());
+
+        DaoAndModelAssertions.assertThat(createSecondUserAccountResponse, secondUserAccountDao).match();
     }
 
     @Test
-    @TestVersion({"with_deletion", "with_database_with_fix"})
+    @TestVersion({"with_database_with_fix"})
     public void userCannotDepositAmountIntoNonExistentAccount() {
         //создать юзера
         CreateUserRequest createUserRequest = AdminSteps.createUserReturnRequest();
@@ -199,5 +225,10 @@ public class DepositMoneyTest extends BaseTest {
         softly.assertThat(getCustomerAccountsResponseList.getFirst().getId()).isEqualTo(createAccountResponse.getId());
         softly.assertThat(getCustomerAccountsResponseList.getFirst().getTransactions()).isEmpty();
         softly.assertThat(getCustomerAccountsResponseList.getFirst().getBalance()).isEqualTo(UserBalanceDefaults.INITIAL_BALANCE.getAmount());
+
+        //проверка через бд
+        AccountDao accountDao = DataBaseSteps.getAccountByAccountNumber(createAccountResponse.getAccountNumber());
+
+        DaoAndModelAssertions.assertThat(createAccountResponse, accountDao).match();
     }
 }

@@ -1,8 +1,11 @@
 package iteration2.api;
 
+import api.dao.UserDao;
+import api.dao.comparison.DaoAndModelAssertions;
 import api.generators.RandomData;
 import api.generators.RandomModelGenerator;
 import api.models.*;
+import api.requests.steps.DataBaseSteps;
 import common.annotations.TestVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,6 +16,8 @@ import api.requests.steps.AdminSteps;
 import api.requests.steps.UserSteps;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class UpdateNameTest extends BaseTest {
     @Test
@@ -50,6 +55,11 @@ public class UpdateNameTest extends BaseTest {
         softly.assertThat(getCustomerProfileResponse.getName()).isEqualTo(updatedName);
         softly.assertThat(getCustomerProfileResponse.getRole().toString()).isEqualTo(createUserRequest.getRole());
         softly.assertThat(getCustomerProfileResponse.getAccounts()).isEmpty();
+
+        //проверка через бд
+        UserDao userDao = DataBaseSteps.getUserByUsername(createUserRequest.getUsername());
+
+        DaoAndModelAssertions.assertThat(updateCustomerProfileRequest, userDao).match();
     }
 
     @ValueSource(strings =
@@ -82,5 +92,10 @@ public class UpdateNameTest extends BaseTest {
         softly.assertThat(getCustomerProfileResponse.getName()).isNull();
         softly.assertThat(getCustomerProfileResponse.getRole().toString()).isEqualTo(UserRole.USER.toString());
         softly.assertThat(getCustomerProfileResponse.getAccounts()).isEmpty();
+
+        //проверка через бд
+        UserDao userDao = DataBaseSteps.getUserByUsername(createUserRequest.getUsername());
+
+        assertNull(userDao.getName());
     }
 }
