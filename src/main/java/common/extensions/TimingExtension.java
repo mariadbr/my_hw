@@ -4,16 +4,16 @@ import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class TimingExtension implements BeforeTestExecutionCallback, AfterTestExecutionCallback {
-    private Map<String, Long> startTimes = new HashMap<>();
+    private static final String START_TIME = "startTime";
+    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(TimingExtension.class);
 
     @Override
     public void beforeTestExecution(ExtensionContext extensionContext) throws Exception {
         String testName = extensionContext.getRequiredTestClass().getPackageName() + "." + extensionContext.getDisplayName();
-        startTimes.put(testName, System.currentTimeMillis());
+
+        extensionContext.getStore(NAMESPACE).put(START_TIME, System.nanoTime());
+
         System.out.println("Thread " + Thread.currentThread().getName() + " : Test started " + testName);
     }
 
@@ -21,7 +21,13 @@ public class TimingExtension implements BeforeTestExecutionCallback, AfterTestEx
     @Override
     public void afterTestExecution(ExtensionContext extensionContext) throws Exception {
         String testName = extensionContext.getRequiredTestClass().getPackageName() + "." + extensionContext.getDisplayName();
-        Long testDuration = System.currentTimeMillis() - startTimes.get(testName);
-        System.out.println("Thread " + Thread.currentThread().getName() + " : Test finished " + testName + " , test duration " + testDuration + " ms");
+
+        Long startTime = extensionContext.getStore(NAMESPACE).remove(START_TIME, Long.class);
+
+        long testDuration = System.nanoTime() - startTime;
+        long durationInMillis = testDuration / 1_000_000;
+
+        System.out.println("Thread " + Thread.currentThread().getName() + " : Test finished " + testName + ", test duration "
+                + durationInMillis + " ms");
     }
 }

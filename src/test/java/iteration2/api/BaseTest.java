@@ -16,7 +16,7 @@ import java.util.List;
 
 import static io.restassured.RestAssured.given;
 
-//@ExtendWith(TimingExtension.class)
+@ExtendWith(TimingExtension.class)
 @ExtendWith(TestVersionExtension.class)
 public class BaseTest {
     protected SoftAssertions softly;

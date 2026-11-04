@@ -13,10 +13,12 @@ public class UserSessionData {
     private final CreateUserRequest user;
     private final UserSteps steps;
     private final List<CreateAccountResponse> accounts = new ArrayList<>();
+    private final Long id;
 
-    public UserSessionData(CreateUserRequest user) {
+    public UserSessionData(CreateUserRequest user, Long id) {
         this.user = user;
         this.steps = new UserSteps(user.getUsername(), user.getPassword());
+        this.id = id;
     }
 
     public void addAccount(CreateAccountResponse account) {

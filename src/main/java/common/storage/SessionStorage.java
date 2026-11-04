@@ -2,13 +2,14 @@ package common.storage;
 
 import api.models.CreateAccountResponse;
 import api.models.CreateUserRequest;
+import api.requests.steps.UserSteps;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 public class SessionStorage {
-    private static ThreadLocal<SessionStorage> INSTANCE = ThreadLocal.withInitial(SessionStorage::new);
+    private static final ThreadLocal<SessionStorage> INSTANCE = ThreadLocal.withInitial(SessionStorage::new);
 
     private LinkedHashMap<CreateUserRequest, UserSessionData> usersMap = new LinkedHashMap<>();
 
@@ -16,7 +17,9 @@ public class SessionStorage {
 
     public static void addUsers(List<CreateUserRequest> users ) {
         for (CreateUserRequest user : users) {
-            INSTANCE.get().usersMap.put(user, new UserSessionData(user));
+            Long userId = new UserSteps(user.getUsername(), user.getPassword()).getProfile().getId();
+
+            INSTANCE.get().usersMap.put(user, new UserSessionData(user, userId));
         }
     }
 
@@ -32,6 +35,11 @@ public class SessionStorage {
     public static CreateUserRequest  getUser() {
         return getUser(1);
     }
+
+    public static List<Long> getAllUsersIds() {
+        return INSTANCE.get().usersMap.values().stream().map(UserSessionData::getId).toList();
+    }
+
 
     public static UserSessionData getSessionData(int userNumber) {
         return new ArrayList<>(INSTANCE.get().usersMap.values()).get(userNumber - 1);
@@ -55,6 +63,7 @@ public class SessionStorage {
 
     public static void clear() {
         INSTANCE.get().usersMap.clear();
+        INSTANCE.remove();
     }
 
     public static int getSessionCount() {
