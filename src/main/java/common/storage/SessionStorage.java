@@ -9,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public class SessionStorage {
-    private static ThreadLocal<SessionStorage> INSTANCE = ThreadLocal.withInitial(SessionStorage::new);
+    private static final ThreadLocal<SessionStorage> INSTANCE = ThreadLocal.withInitial(SessionStorage::new);
 
     private LinkedHashMap<CreateUserRequest, UserSessionData> usersMap = new LinkedHashMap<>();
 
@@ -62,6 +62,7 @@ public class SessionStorage {
 
     public static void clear() {
         INSTANCE.get().usersMap.clear();
+        INSTANCE.remove();
     }
 
     public static int getSessionCount() {

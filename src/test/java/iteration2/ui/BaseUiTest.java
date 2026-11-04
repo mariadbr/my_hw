@@ -36,7 +36,11 @@ public class BaseUiTest extends BaseTest {
 
     @AfterEach
     public void cleanAll() {
-        SessionStorage.getAllUsersIds().forEach(AdminSteps::deleteById);
+        try {
+            SessionStorage.getAllUsersIds().forEach(AdminSteps::deleteById);
+        } finally {
+            SessionStorage.clear();
+        }
     }
 
     @AfterEach

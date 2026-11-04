@@ -19,7 +19,7 @@ public class UserSessionExtension implements BeforeEachCallback {
         if (annotation != null) {
             int userCount = annotation.value();
 
-            SessionStorage.clear();
+            //SessionStorage.clear();
 
             List<CreateUserRequest> users = new ArrayList<>();
 
